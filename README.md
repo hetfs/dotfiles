@@ -1,7 +1,5 @@
 
-# Dotfiles Repository
-
-This repository contains my dotfiles, managed by Chezmoi.
+# Dotfiles which Chezmoi manages
 
 Welcome to my dotfiles repository! This repository contains my personal configuration files and scripts, designed to streamline my development environment across multiple platforms, including **Windows**, **Linux**, and **macOS**.
 
@@ -20,11 +18,10 @@ Welcome to my dotfiles repository! This repository contains my personal configur
 
 ## Getting Started
 
-To clone and apply my configurations, simply run:
-
+We need to install chezmoi first and pull the configuration:
 ```bash
-chezmoi init https://github.com/yourusername/dotfiles.git
+chezmoi init https://github.com/hetfs/dotfiles.git
 chezmoi apply
 ```
-
+chezmoi's documentation is at [chezmoi.io](https://chezmoi.io/).
 Feel free to explore and adapt these configurations for your own development needs!
