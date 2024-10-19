@@ -1,4 +1,4 @@
-# Dotfiles which Chezmoi manages
+# Dotfiles using Chezmoi
 
 Welcome to my dotfiles repository! This repository contains my personal configuration files and scripts, designed to streamline my development environment across multiple platforms, including **Windows**, **Linux**, and **macOS**.
 
