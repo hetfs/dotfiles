@@ -21,7 +21,7 @@ We need to install chezmoi first and pull the configuration:
 
 ```shell
 # Initialising chezmoi repository
-
+chezmoi init https://github.com/hetfs/dotfiles.git
 # Checking changes
 chezmoi diff
 # Applying changes
