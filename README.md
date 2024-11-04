@@ -21,7 +21,7 @@ We need to install chezmoi first and pull the configuration:
 
 ```shell
 # Initialising chezmoi repository
-chezmoi init git@github.com:gwarf/dotfiles.git
+
 # Checking changes
 chezmoi diff
 # Applying changes
