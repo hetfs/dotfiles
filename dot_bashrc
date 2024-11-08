@@ -1,0 +1,13 @@
+export STARSHIP_CONFIG="C:\\DevLib\\starship\\starship.toml"
+eval "$(starship init bash)"
+
+eval "$(zoxide init bash)"
+
+# Set up fzf key bindings and fuzzy completions
+
+eval "$(fzf --bash)"
+
+# set bash environment variables
+export _ZO_ECHO='1'
+export PATH="/c/Users/binahf/git-fuzzy/bin:$PATH"
+export PATH="/c/Users/binahf/git-fuzzy/bin:$PATH"
