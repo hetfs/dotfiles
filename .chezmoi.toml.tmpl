@@ -1,0 +1,126 @@
+# .local/share/chezmoi.chezmoi.toml.toml
+
+[data]
+os = "{{ .chezmoi.os }}"
+user = "{{ .chezmoi.username }}"
+name = "{{ "Lomdo Fredaws" }}"         # replace Lomdo Fredaws by your name
+email = "{{ "hetfs01@gmail.com" }}"    # replace hetfs01@gmail.com by your email
+home = "{{ .chezmoi.homeDir }}"
+hostname = "{{ .chezmoi.hostname }}"
+sourceDir = "{{ .chezmoi.homeDir }}/.local/share/chezmoi"
+destinationDir = "{{ .chezmoi.homeDir }}"   
+# Define platform-specific package installation scripts.
+
+# Construct the OS identifier based on the OS release information.
+{{- $osid := .chezmoi.os -}}
+{{- if hasKey .chezmoi.osRelease "id" -}}
+{{-   $osid = printf "%s-%s" .chezmoi.os .chezmoi.osRelease.id -}}
+
+# Store the OS identifier as a variable for reuse.
+osid = {{ $osid | quote }}
+
+{{ if eq .osid "darwin" }}
+# macOS-specific package installation script.
+run_once_before_install-packages-darwin.sh.tmpl
+
+{{ else if eq .osid "linux-debian" }}
+# linux-debian-specific package installation script.
+run_once_before_install-packages-linux-debian.sh.tmpl
+
+# Detect Windows Subsystem for Linux (WSL).
+{{ else if eq .chezmoi.os "linux" }}
+{{   if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+# WSL-specific package installation script.
+
+{{else if eq .chezmoi.os "windows" }}
+# Windows-specific package installation script.
+run_once_install-packages-windows.ps1.tmpl
+{{- end }}
+{{ end }}
+{{ end }}
+
+# Configuration for managing diffs using the "delta" tool
+[diff]
+command = "delta"  # Use "delta" for displaying diffs
+pager = "{{ "delta" }}"  # Use "delta" as the pager for diff output
+
+# Conditional configuration for macOS (darwin)
+{{ if eq .chezmoi.os "darwin" }}
+[[textconv]]
+pattern = "{{ "**/*.plist" }}"  # Apply this rule to plist files
+command = "{{ "plutil" }}"  # Use "plutil" to process plist files
+args = [ 
+    "{{ "-convert" }}", "{{ "xml1" }}", "{{ "-o" }}", "{{ "-" }}", "{{ "-" }}"
+]  # Convert plist files to XML format for better diffs
+{{ end }}
+
+# Editor configuration for manual editing
+[edit]
+hardlink = false  # autocmd to run chezmoi apply whenever you save a dotfile
+command = "nvim"  # Set Neovim as the default editor
+
+# Configuration for resolving merge conflicts using Neovim
+[merge]
+command = "nvim"  # Use Neovim as the merge tool
+args = [
+    "-d", "{{ "{{" }} .Destination {{ "}}" }}", 
+    "{{ "{{" }} .Source {{ "}}" }}", 
+    "{{ "{{" }} .Target {{ "}}" }}"
+]  # Compare and merge Destination, Source, and Target files
+
+# Fallback editor configuration for edits
+[edit.fallback]
+command = "code"  # Use VS Code as a fallback editor
+args = ["--wait"]  # Wait for the editor to close before proceeding
+
+# Fallback merge configuration
+[merge.fallback]
+args = [ 
+    "-c", "cp {{ "{{" }} .Target {{ "}}" }} {{ "{{" }} .Target {{ "}}" }}.base && code --new-window --wait --merge {{ "{{" }} .Destination {{ "}}" }} {{ "{{" }} .Target {{ "}}" }} {{ "{{" }} .Target {{ "}}" }}.base {{ "{{" }} .Source {{ "}}" }}"
+]  # Create a backup of the target and use VS Code for merging
+
+# Dynamic editor selection based on the operating system
+editor = """{{- if eq .chezmoi.os "windows" -}}
+nvim || code  
+{{- else if eq .chezmoi.os "darwin" -}}
+nvim || code 
+{{- else -}}
+nvim || code 
+{{- end -}}"""
+
+# Default permissions for files created by chezmoi
+umask = "077"  # Restrict file permissions for privacy
+
+# Symlink management configuration
+[symlinks]
+symlinks = "replace"  # Replace files with symlinks if applicable
+
+# Git configuration
+[git]
+autoCommit = true  # Automatically stage and commit changes
+autoPush = true  # Automatically push changes to the remote repository
+branches = ["main", "develop"]  # Specify branches to track
+
+# General settings
+[settings]
+backup = true  # Enable backups for modified files
+verbose = true  # Show detailed output during operations
+
+# Dynamic shell selection based on the operating system
+shell = """{{ if eq .chezmoi.os "windows" }}
+pwsh 
+{{ else if eq .chezmoi.os "darwin" }}
+zsh 
+{{ else }}
+bash 
+{{ end }}"""
+
+# Custom hooks for executing actions before/after chezmoi commands
+# [hooks.read-source-state.pre]
+# command = "echo"
+# args = ["pre-read-source-state-hook"]  # Pre-read hook (commented out)
+
+[hooks.apply.post]
+command = "echo"  # Display a success message after applying changes
+args = ["Dotfiles applied successfully!"]
+
