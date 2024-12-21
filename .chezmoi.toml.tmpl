@@ -9,8 +9,8 @@ home = "{{ .chezmoi.homeDir }}"
 hostname = "{{ .chezmoi.hostname }}"
 sourceDir = "{{ .chezmoi.homeDir }}/.local/share/chezmoi"
 destinationDir = "{{ .chezmoi.homeDir }}"   
-# Define platform-specific package installation scripts.
 
+# Define platform-specific package installation scripts.
 # Construct the OS identifier based on the OS release information.
 {{- $osid := .chezmoi.os -}}
 {{- if hasKey .chezmoi.osRelease "id" -}}
@@ -24,15 +24,19 @@ osid = {{ $osid | quote }}
 run_once_before_install-packages-darwin.sh.tmpl
 
 {{ else if eq .osid "linux-debian" }}
-# linux-debian-specific package installation script.
+# Linux (Debian-based) specific package installation script.
 run_once_before_install-packages-linux-debian.sh.tmpl
 
 # Detect Windows Subsystem for Linux (WSL).
 {{ else if eq .chezmoi.os "linux" }}
-{{   if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+{{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
 # WSL-specific package installation script.
 
-{{else if eq .chezmoi.os "windows" }}
+{{ else if eq .osid "linux-arch" }}
+# Arch Linux-specific package installation script.
+run_once_before_install-packages-arch.sh.tmpl
+
+{{ else if eq .chezmoi.os "windows" }}
 # Windows-specific package installation script.
 run_once_install-packages-windows.ps1.tmpl
 {{- end }}
