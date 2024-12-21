@@ -10,3 +10,8 @@ eval "$(fzf --bash)"
 # set bash environment variables
 export _ZO_ECHO='1'
 export PATH="/c/Users/binahf/git-fuzzy/bin:$PATH"
+<<<<<<< HEAD
+||||||| empty tree
+=======
+export PATH="/c/Users/binahf/git-fuzzy/bin:$PATH"
+>>>>>>> 517e4834f131d9c5f9d0eb05ee1e443aa12cfe71
