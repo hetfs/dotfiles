@@ -8,6 +8,7 @@ if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
   }
 }
 
+
 # Define log folder and file paths
 $logFolder = "C:\Custom\Path"  # Path to the log directory
 $logFileName = "MyLogFile.txt"  # Name of the log file
@@ -71,7 +72,55 @@ function Check-PackageManager {
 
 # Function to install the BurntToast module if not already installed
 function Install-BurntToast {
-    if (-not (Get-Mod# Current index of the package in the list
+    if (-not (Get-Module -ListAvailable -Name BurntToast)) {
+        Log-Message "Installing BurntToast module..."
+        try {
+            Install-Module -Name BurntToast -Force -Scope CurrentUser -ErrorAction Stop
+            Log-Message "BurntToast module installed successfully."
+        } catch {
+            # Handle errors based on their HRESULT codes
+            $errorCode = $_.Exception.HResult
+            switch ($errorCode) {
+                -2146233088 {
+                    Log-Message "Permission error during module installation: $_"
+                    Show-Toast -title "Installation Failed" -message "Permission error: Please run PowerShell as an administrator."
+                }
+                -2146828234 {
+                    Log-Message "Network error during module installation: $_"
+                    Show-Toast -title "Installation Failed" -message "Network error: Please check your internet connection."
+                }
+                default {
+                    Log-Message "Failed to install BurntToast module: $_"
+                    Show-Toast -title "Module Installation Failed" -message "Error: $_"
+                }
+            }
+        }
+    } else {
+        Log-Message "BurntToast module is already installed."
+    }
+}
+
+# Function to update all package managers
+function Update-PackageManager {
+    if (Check-PackageManager 'winget') {
+        winget upgrade --all | Out-Null
+        Log-Message "winget packages updated."
+    }
+    if (Check-PackageManager 'choco') {
+        choco upgrade all -y | Out-Null
+        Log-Message "Chocolatey packages updated."
+    }
+    if (Check-PackageManager 'scoop') {
+        scoop update * | Out-Null
+        Log-Message "Scoop packages updated."
+    }
+}
+
+# Function to install a package with error handling and progress display
+function Install-Package {
+    param (
+        [string]$packageName,        # Name of the package to install
+        [int]$currentPackageIndex,  # Current index of the package in the list
         [int]$totalPackages         # Total number of packages to install
     )
     $success = $false
@@ -144,52 +193,3 @@ foreach ($package in $userPackages) {
 
 # Indicate installation is complete
 Write-Host "`nInstallation complete."
-ule -ListAvailable -Name BurntToast)) {
-        Log-Message "Installing BurntToast module..."
-        try {
-            Install-Module -Name BurntToast -Force -Scope CurrentUser -ErrorAction Stop
-            Log-Message "BurntToast module installed successfully."
-        } catch {
-            # Handle errors based on their HRESULT codes
-            $errorCode = $_.Exception.HResult
-            switch ($errorCode) {
-                -2146233088 {
-                    Log-Message "Permission error during module installation: $_"
-                    Show-Toast -title "Installation Failed" -message "Permission error: Please run PowerShell as an administrator."
-                }
-                -2146828234 {
-                    Log-Message "Network error during module installation: $_"
-                    Show-Toast -title "Installation Failed" -message "Network error: Please check your internet connection."
-                }
-                default {
-                    Log-Message "Failed to install BurntToast module: $_"
-                    Show-Toast -title "Module Installation Failed" -message "Error: $_"
-                }
-            }
-        }
-    } else {
-        Log-Message "BurntToast module is already installed."
-    }
-}
-
-# Function to update all package managers
-function Update-PackageManager {
-    if (Check-PackageManager 'winget') {
-        winget upgrade --all | Out-Null
-        Log-Message "winget packages updated."
-    }
-    if (Check-PackageManager 'choco') {
-        choco upgrade all -y | Out-Null
-        Log-Message "Chocolatey packages updated."
-    }
-    if (Check-PackageManager 'scoop') {
-        scoop update * | Out-Null
-        Log-Message "Scoop packages updated."
-    }
-}
-
-# Function to install a package with error handling and progress display
-function Install-Package {
-    param (
-        [string]$packageName,        # Name of the package to install
-        [int]$currentPackageIndex,  
