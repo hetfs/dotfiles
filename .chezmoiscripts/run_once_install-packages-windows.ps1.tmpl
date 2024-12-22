@@ -1,49 +1,32 @@
-
 # Self-elevate the script if required
 if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
-  if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
-    $CommandLine = "-NoExit -File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
-    Start-Process -Wait -FilePath PowerShell.exe -Verb Runas -ArgumentList $CommandLine
-    Exit
-  }
+    if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
+        $CommandLine = "-NoExit -File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
+        Start-Process -Wait -FilePath PowerShell.exe -Verb RunAs -ArgumentList $CommandLine
+        Exit
+    }
 }
-
 
 # Define log folder and file paths
-$logFolder = "C:\Custom\Path"  # Path to the log directory
-$logFileName = "MyLogFile.txt"  # Name of the log file
-$logFile = Join-Path -Path $logFolder -ChildPath $logFileName  # Combine folder and file name to get the full log file path
-
-# Define colors for each status in the progress bar
-$colors = @{
-    "default"  = "`e[0;37m"  # White (default text color)
-    "success"  = "`e[0;32m"  # Green for successful operations
-    "error"    = "`e[0;31m"  # Red for errors
-    "warning"  = "`e[0;33m"  # Yellow for warnings
-    "info"     = "`e[0;34m"  # Blue for informational messages
-    "critical" = "`e[0;35m"  # Magenta for critical issues
-    "pending"  = "`e[0;36m"  # Cyan for pending tasks
-}
+$logFolder = [System.IO.Path]::Combine($env:USERPROFILE, "LogsChezmoi")  # User's home directory
+$logFileName = "pwsh_chemoiLogs.txt"  # Name of the log file
+$logFile = Join-Path -Path $logFolder -ChildPath $logFileName  # Full log file path
 
 # Function to log messages to the log file
 function Log-Message {
     param (
         [string]$message  # Message to log
     )
-    $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")  # Timestamp in log
-    "$timestamp - $message" | Out-File -Append -FilePath $logFile
+    $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss.fff")  # Timestamp with milliseconds
+    try {
+        "$timestamp - $message" | Out-File -Append -FilePath $logFile -ErrorAction Stop
+    } catch {
+        Show-Toast -title "Log Error" -message "Failed to write to log file: $_"
+        Write-Host "Error writing to log file: $_"
+    }
 }
 
-# Function to show toast notifications using the BurntToast module
-function Show-Toast {
-    param (
-        [string]$title,    # Title of the notification
-        [string]$message   # Notification message
-    )
-    New-BurntToastNotification -Text $title, $message
-}
-
-# Ensure the log directory exists, create it if not present
+# Ensure the log directory exists; create it if not present
 if (-not (Test-Path -Path $logFolder)) {
     try {
         New-Item -ItemType Directory -Path $logFolder -ErrorAction Stop | Out-Null
@@ -57,6 +40,26 @@ if (-not (Test-Path -Path $logFolder)) {
     Log-Message "Log directory already exists at $logFolder."
 }
 
+# Define colors for each status in the progress bar
+$colors = @{
+    "default"  = "`e[0;37m"  # White (default text color)
+    "success"  = "`e[0;32m"  # Green for successful operations
+    "error"    = "`e[0;31m"  # Red for errors
+    "warning"  = "`e[0;33m"  # Yellow for warnings
+    "info"     = "`e[0;34m"  # Blue for informational messages
+    "critical" = "`e[0;35m"  # Magenta for critical issues
+    "pending"  = "`e[0;36m"  # Cyan for pending tasks
+}
+
+# Function to show toast notifications using the BurntToast module
+function Show-Toast {
+    param (
+        [string]$title,    # Title of the notification
+        [string]$message   # Notification message
+    )
+    New-BurntToastNotification -Text $title, $message
+}
+
 # Function to check if a specified package manager is installed
 function Check-PackageManager {
     param (
@@ -68,6 +71,21 @@ function Check-PackageManager {
         'scoop' { return (Get-Command scoop -ErrorAction SilentlyContinue) }
         default { return $false }
     }
+}
+
+# Function to check if a package is installed
+function Is-PackageInstalled {
+    param (
+        [string]$packageName  # Name of the package to check
+    )
+    if (Check-PackageManager 'winget') {
+        return winget list | Select-String -Pattern $packageName -Quiet
+    } elseif (Check-PackageManager 'choco') {
+        return choco list --local-only | Select-String -Pattern $packageName -Quiet
+    } elseif (Check-PackageManager 'scoop') {
+        return scoop list | Select-String -Pattern $packageName -Quiet
+    }
+    return $false
 }
 
 # Function to install the BurntToast module if not already installed
@@ -101,7 +119,7 @@ function Install-BurntToast {
 }
 
 # Function to update all package managers
-function Update-PackageManager {
+function Update-PackageManagers {
     if (Check-PackageManager 'winget') {
         winget upgrade --all | Out-Null
         Log-Message "winget packages updated."
@@ -120,13 +138,20 @@ function Update-PackageManager {
 function Install-Package {
     param (
         [string]$packageName,        # Name of the package to install
-        [int]$currentPackageIndex,  # Current index of the package in the list
-        [int]$totalPackages         # Total number of packages to install
+        [int]$currentPackageIndex,   # Current index of the package in the list
+        [int]$totalPackages          # Total number of packages to install
     )
+    if (Is-PackageInstalled -packageName $packageName) {
+        Log-Message "$packageName is already installed. Skipping installation."
+        Show-TextProgress -current ($currentPackageIndex + 1) -total $totalPackages -message "Skipped: $packageName" -status "info"
+        return
+    }
+
     $success = $false
     try {
         # Show progress for installation
         Show-TextProgress -current $currentPackageIndex -total $totalPackages -message "Installing $packageName" -status "pending"
+        
         if (Check-PackageManager 'winget') {
             winget install $packageName -y
             $success = $true
@@ -168,7 +193,7 @@ function Show-TextProgress {
 
 # Main script execution
 Install-BurntToast
-Update-PackageManager
+Update-PackageManagers
 
 # Define available packages and prompt user for input
 $availablePackages = @("git", "vim", "7zip", "wget", "curl", "neofetch", "htop", "tmux")
