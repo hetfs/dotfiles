@@ -15,31 +15,41 @@ destinationDir = "{{ .chezmoi.homeDir }}"
 {{- $osid := .chezmoi.os -}}
 {{- if hasKey .chezmoi.osRelease "id" -}}
 {{-   $osid = printf "%s-%s" .chezmoi.os .chezmoi.osRelease.id -}}
+{{- end -}}
 
 # Store the OS identifier as a variable for reuse.
 osid = {{ $osid | quote }}
 
-{{ if eq .osid "darwin" }}
+{{ if eq $osid "darwin" }}
 # macOS-specific package installation script.
 run_once_before_install-packages-darwin.sh.tmpl
 
-{{ else if eq .osid "linux-debian" }}
+{{ else if eq $osid "linux-debian" }}
 # Linux (Debian-based) specific package installation script.
 run_once_before_install-packages-linux-debian.sh.tmpl
 
-# Detect Windows Subsystem for Linux (WSL).
-{{ else if eq .chezmoi.os "linux" }}
-{{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
-# WSL-specific package installation script.
+{{ else if eq $osid "linux-fedora" }}
+# Fedora-specific package installation script.
+run_once_before_install-packages-fedora.sh.tmpl
 
-{{ else if eq .osid "linux-arch" }}
+{{ else if eq $osid "linux-arch" }}
 # Arch Linux-specific package installation script.
 run_once_before_install-packages-arch.sh.tmpl
 
+{{ else if eq .chezmoi.os "nixos" }}
+# NixOS-specific package installation script.
+run_once_before_install-packages-nixos.sh.tmpl
+
+{{ else if eq .chezmoi.os "linux" }}
+# Detect Windows Subsystem for Linux (WSL).
+{{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+# WSL-specific package installation script.
+run_once_before_install-packages-wsl.sh.tmpl
+
 {{ else if eq .chezmoi.os "windows" }}
 # Windows-specific package installation script.
-run_once_install-packages-windows.ps1.tmpl
-{{- end }}
+run_once_before_install-packages-windows.ps1.tmpl
+{{ end }}
 {{ end }}
 {{ end }}
 
@@ -109,15 +119,6 @@ branches = ["main", "develop"]  # Specify branches to track
 [settings]
 backup = true  # Enable backups for modified files
 verbose = true  # Show detailed output during operations
-
-# Dynamic shell selection based on the operating system
-shell = """{{ if eq .chezmoi.os "windows" }}
-pwsh 
-{{ else if eq .chezmoi.os "darwin" }}
-zsh 
-{{ else }}
-bash 
-{{ end }}"""
 
 # Custom hooks for executing actions before/after chezmoi commands
 # [hooks.read-source-state.pre]
