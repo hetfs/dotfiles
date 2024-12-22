@@ -168,8 +168,8 @@ function Install-Package {
             Show-TextProgress -current ($currentPackageIndex + 1) -total $totalPackages -message "Installed $packageName" -status "success"
         }
     } catch {
-        Log-Message "Failed to install $packageName: $_"
-        Show-Toast -title "Installation Error" -message "Failed to install $packageName. Error: $_"
+        Log-Message "Failed to install $packageName: $($_)"
+        Show-Toast -title "Installation Error" -message "Failed to install $packageName. Error: $($_)"
         # Show failure in progress
         Show-TextProgress -current ($currentPackageIndex + 1) -total $totalPackages -message "Failed: $packageName" -status "error"
     }
