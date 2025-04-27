@@ -1,0 +1,220 @@
+# Self-elevate the script if required
+if (-Not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] 'Administrator')) {
+    if ([int](Get-CimInstance -Class Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber) -ge 6000) {
+        $CommandLine = "-NoExit -File `"" + $MyInvocation.MyCommand.Path + "`" " + $MyInvocation.UnboundArguments
+        Start-Process -Wait -FilePath PowerShell.exe -Verb RunAs -ArgumentList $CommandLine
+        Exit
+    }
+}
+
+# Define log folder and file paths
+$logFolder = [System.IO.Path]::Combine($env:USERPROFILE, "LogsChezmoi")  # User's home directory
+$logFileName = "pwsh_chemoiLogs.txt"  # Name of the log file
+$logFile = Join-Path -Path $logFolder -ChildPath $logFileName  # Full log file path
+
+# Function to log messages to the log file
+function Log-Message {
+    param (
+        [string]$message  # Message to log
+    )
+    $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss.fff")  # Timestamp with milliseconds
+    try {
+        "$timestamp - $message" | Out-File -Append -FilePath $logFile -ErrorAction Stop
+    } catch {
+        Show-Toast -title "Log Error" -message "Failed to write to log file: $_"
+        Write-Host "Error writing to log file: $_"
+    }
+}
+
+# Ensure the log directory exists; create it if not present
+if (-not (Test-Path -Path $logFolder)) {
+    try {
+        New-Item -ItemType Directory -Path $logFolder -ErrorAction Stop | Out-Null
+        Log-Message "Created log directory at $logFolder."
+    } catch {
+        Log-Message "Failed to create log directory: $_"
+        Show-Toast -title "Directory Creation Failed" -message "Could not create directory at $logFolder. Error: $_"
+        exit
+    }
+} else {
+    Log-Message "Log directory already exists at $logFolder."
+}
+
+# Define colors for each status in the progress bar
+$colors = @{
+    "default"  = "`e[0;37m"  # White (default text color)
+    "success"  = "`e[0;32m"  # Green for successful operations
+    "error"    = "`e[0;31m"  # Red for errors
+    "warning"  = "`e[0;33m"  # Yellow for warnings
+    "info"     = "`e[0;34m"  # Blue for informational messages
+    "critical" = "`e[0;35m"  # Magenta for critical issues
+    "pending"  = "`e[0;36m"  # Cyan for pending tasks
+}
+
+# Function to show toast notifications using the BurntToast module
+function Show-Toast {
+    param (
+        [string]$title,    # Title of the notification
+        [string]$message   # Notification message
+    )
+    New-BurntToastNotification -Text $title, $message
+}
+
+# Function to check if a specified package manager is installed
+function Check-PackageManager {
+    param (
+        [string]$manager  # Name of the package manager
+    )
+    switch ($manager) {
+        'winget' { return (Get-Command winget -ErrorAction SilentlyContinue) }
+        'choco' { return (Get-Command choco -ErrorAction SilentlyContinue) }
+        'scoop' { return (Get-Command scoop -ErrorAction SilentlyContinue) }
+        default { return $false }
+    }
+}
+
+# Function to check if a package is installed
+function Is-PackageInstalled {
+    param (
+        [string]$packageName  # Name of the package to check
+    )
+    if (Check-PackageManager 'winget') {
+        return winget list | Select-String -Pattern $packageName -Quiet
+    } elseif (Check-PackageManager 'choco') {
+        return choco list --local-only | Select-String -Pattern $packageName -Quiet
+    } elseif (Check-PackageManager 'scoop') {
+        return scoop list | Select-String -Pattern $packageName -Quiet
+    }
+    return $false
+}
+
+# Function to install the BurntToast module if not already installed
+function Install-BurntToast {
+    if (-not (Get-Module -ListAvailable -Name BurntToast)) {
+        Log-Message "Installing BurntToast module..."
+        try {
+            Install-Module -Name BurntToast -Force -Scope CurrentUser -ErrorAction Stop
+            Log-Message "BurntToast module installed successfully."
+        } catch {
+            # Handle errors based on their HRESULT codes
+            $errorCode = $_.Exception.HResult
+            switch ($errorCode) {
+                -2146233088 {
+                    Log-Message "Permission error during module installation: $_"
+                    Show-Toast -title "Installation Failed" -message "Permission error: Please run PowerShell as an administrator."
+                }
+                -2146828234 {
+                    Log-Message "Network error during module installation: $_"
+                    Show-Toast -title "Installation Failed" -message "Network error: Please check your internet connection."
+                }
+                default {
+                    Log-Message "Failed to install BurntToast module: $_"
+                    Show-Toast -title "Module Installation Failed" -message "Error: $_"
+                }
+            }
+        }
+    } else {
+        Log-Message "BurntToast module is already installed."
+    }
+}
+
+# Function to update all package managers
+function Update-PackageManagers {
+    if (Check-PackageManager 'winget') {
+        winget upgrade --all | Out-Null
+        Log-Message "winget packages updated."
+    }
+    if (Check-PackageManager 'choco') {
+        choco upgrade all -y | Out-Null
+        Log-Message "Chocolatey packages updated."
+    }
+    if (Check-PackageManager 'scoop') {
+        scoop update * | Out-Null
+        Log-Message "Scoop packages updated."
+    }
+}
+
+# Function to install a package with error handling and progress display
+function Install-Package {
+    param (
+        [string]$packageName,        # Name of the package to install
+        [int]$currentPackageIndex,   # Current index of the package in the list
+        [int]$totalPackages          # Total number of packages to install
+    )
+    if (Is-PackageInstalled -packageName $packageName) {
+        Log-Message "$packageName is already installed. Skipping installation."
+        Show-TextProgress -current ($currentPackageIndex + 1) -total $totalPackages -message "Skipped: $packageName" -status "info"
+        return
+    }
+
+    $success = $false
+    try {
+        # Show progress for installation
+        Show-TextProgress -current $currentPackageIndex -total $totalPackages -message "Installing $packageName" -status "pending"
+        
+        if (Check-PackageManager 'winget') {
+            winget install $packageName -y
+            $success = $true
+        } elseif (Check-PackageManager 'choco') {
+            choco install $packageName -y
+            $success = $true
+        } elseif (Check-PackageManager 'scoop') {
+            scoop install $packageName
+            $success = $true
+        }
+
+        if ($success) {
+            Log-Message "$packageName installed successfully."
+            Show-TextProgress -current ($currentPackageIndex + 1) -total $totalPackages -message "Installed $packageName" -status "success"
+        }
+    } catch {
+        Log-Message "Failed to install $packageName: $($_.Exception.Message)"  # Fixed variable reference
+        Show-Toast -title "Installation Error" -message "Failed to install $packageName. Error: $($_.Exception.Message)"
+        # Show failure in progress
+        Show-TextProgress -current ($currentPackageIndex + 1) -total $totalPackages -message "Failed: $packageName" -status "error"
+    }
+}
+
+# Function to display a text-based progress bar
+function Show-TextProgress {
+    param (
+        [int]$current,       # Current progress count
+        [int]$total,         # Total number of items
+        [string]$message = "",  # Progress message
+        [string]$status = "default"  # Status of the progress (color)
+    )
+    $percent = [math]::Round(($current / $total) * 100)
+    $barLength = 50
+    $progress = [math]::Round(($current / $total) * $barLength)
+    $color = $colors[$status]
+    $bar = "[" + ($color + "#" * $progress + "`e[0;37m" + "-" * ($barLength - $progress) + "]")
+    Write-Host -NoNewline "`r$bar $percent% - $message"
+}
+
+# Main script execution
+Install-BurntToast
+Update-PackageManagers
+
+# Define available packages and prompt user for input
+$availablePackages = @("git", "vim", "7zip", "wget", "curl", "neofetch", "htop", "tmux")
+Write-Host "Available packages to install: $($availablePackages -join ', ')"
+$input = Read-Host "Enter the packages you want to install (comma-separated)"
+
+# Process user input and install packages
+$userPackages = $input -split ',' | ForEach-Object { $_.Trim() }
+$currentPackageIndex = 0
+$totalPackages = $userPackages.Count
+
+foreach ($package in $userPackages) {
+    if ($availablePackages -contains $package) {
+        Install-Package -packageName $package -currentPackageIndex $currentPackageIndex -totalPackages $totalPackages
+        $currentPackageIndex++
+    } else {
+        Log-Message "Package $package is not in the available list."
+        Show-Toast -title "Invalid Package" -message "Package $package is not in the available list."
+        Show-TextProgress -current ($currentPackageIndex + 1) -total $totalPackages -message "Warning: Package $package is not valid!" -status "warning"
+    }
+}
+
+# Indicate installation is complete
+Write-Host "`nInstallation complete."
