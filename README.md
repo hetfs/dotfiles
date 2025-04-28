@@ -1,6 +1,14 @@
 # 🚀 Unified Dotfile Management with **chezmoi** + **Ansible**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://chatgpt.com/c/LICENSE) [![chezmoi](https://img.shields.io/badge/built%20with-chezmoi-ff69b4)](https://chezmoi.io/) [![ansible](https://img.shields.io/badge/managed%20by-ansible-blue)](https://www.ansible.com/)
+## 🚀 Project Status
+
+[![Compliance Ready](https://img.shields.io/badge/Compliance-SOC2%2FISO27001-green)](#compliance-architecture)
+[![Cross-Platform](https://img.shields.io/badge/OS-macOS%20|%20Linux%20|%20Windows-blue)](#platform-support-matrix)
+[![Zero-Touch Automation](https://img.shields.io/badge/Automation-Zero--Touch-brightgreen)](#key-features)
+[![License](https://img.shields.io/github/license/your-org/your-repo)](#license)
+[![Built with chezmoi + ansible](https://img.shields.io/badge/Toolchain-chezmoi%20%2B%20ansible-important)](#core-toolchain)
+
+
 
 > **Enterprise-Ready | Cross-Platform | SOC2 & ISO27001 Validated**
 
@@ -84,7 +92,7 @@ Security baked in:
 ### ⚡ Zero-Touch Deployment
 
 ```bash
-chezmoi init https://github.com/your-repo && chezmoi apply
+chezmoi init https://github.com/https://github.com/hetfs/dotfiles.git && chezmoi apply
 ```
 
 ---
