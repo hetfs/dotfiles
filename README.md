@@ -8,25 +8,16 @@
 
 ## 📜 Table of Contents
 
-- [Why This Matters](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-why-this-matters)
-
-- [Compliance Architecture](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-compliance-first-architecture)
-
-- [Platform Support Matrix](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-platform-coverage)
-
-- [Key Features](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-key-features)
-
-- [Core Toolchain](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-core-toolchain)
-
-- [Terminal Ecosystem](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-the-terminal-experience)
-
-- [Getting Started](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-quickstart)
-
-- [Documentation](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-documentation)
-
-- [Contributing](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-contributing)
-
-- [License](https://chatgpt.com/c/680efa81-548c-8012-9dcd-b462caa6ae1c#-license)
+- [Why This Matters](##✨why-this-matters)
+- [Compliance Architecture](#compliance-architecture)
+- [Platform Support Matrix](#platform-support-matrix)
+- [Key Features](#key-features)
+- [Core Toolchain](#core-toolchain)
+- [Terminal Ecosystem](#terminal-ecosystem)
+- [Getting Started](#getting-started)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](##license)
 
 ---
 
@@ -165,7 +156,7 @@ curl -sL https://chezmoi.io/get | bash
 ### 2. Bootstrap Your Environment
 
 ```bash
-chezmoi init --apply git@github.com:your-org/your-repo.git
+chezmoi init --apply git@github.com:https://github.com/hetfs/dotfiles.git
 ```
 
 ---
