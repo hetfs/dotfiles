@@ -1,10 +1,9 @@
 # 🧰 Cross-Platform Automation Framework
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit/)
-[![chezmoi: dotfiles manager](https://img.shields.io/badge/chezmoi-👩‍🎨_dotfiles-blue?logo=chezmoi&style=for-the-badge)](https://www.chezmoi.io)
-[![Ansible](https://img.shields.io/badge/ansible-automation-red)](https://www.ansible.com)
-[![CI](https://img.shields.io/github/actions/workflow/status/hetfs/dotfiles/ci.yml?branch=main)](https://github.com/hetfs/dotfiles/actions)
-[![Docs](https://img.shields.io/badge/docs-powered--by--docusaurus-green)](https://docusaurus.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-1575F9.svg?style=for-the-badge&logo=open-source-initiative&logoColor=white)](https://opensource.org/license/mit/)
+[![chezmoi](https://img.shields.io/badge/chezmoi-👩‍🎨_dotfiles-00A0DC?style=for-the-badge&logo=chezmoi&logoColor=white)](https://www.chezmoi.io)
+[![Ansible](https://img.shields.io/badge/Ansible-Automation-EE0000?style=for-the-badge&logo=ansible&logoColor=white)](https://www.ansible.com)
+[![Documentation](https://img.shields.io/badge/Docs-Docusaurus-25C2A0?style=for-the-badge&logo=docusaurus&logoColor=white)](https://docusaurus.io)
 
 ---
 
