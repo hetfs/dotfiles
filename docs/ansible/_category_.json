@@ -1,0 +1,9 @@
+{
+  "label": "Ansible",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "title": "Ansible Automation",
+    "description": "Learn how to automate Linux, Windows, and macOS systems using Ansible. This section covers inventory setup, cross-platform roles, secrets management, and integration with tools like chezmoi and GitHub Actions."
+  },
+}

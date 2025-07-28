@@ -1,0 +1,9 @@
+{
+  "label": "Chezmoi",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "title": "Chezmoi Automation",
+    "description": "Learn how to bootstrap systems, automate configuration, and securely manage secrets."
+  }
+}

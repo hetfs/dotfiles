@@ -1,0 +1,9 @@
+{
+  "label": "Platforms",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "title": "Platform Compatibility",
+    "description": "Explore all OS platforms supported by the automation stack, including Linux, macOS, Windows, and experimental targets."
+  }
+}
