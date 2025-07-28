@@ -1,7 +1,7 @@
 # 🧰 Cross-Platform Automation Framework
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit/)
-[![chezmoi](https://img.shields.io/badge/chezmoi-%F0%9F%91%A9%E2%80%8D%F0%9F%8E%A7-dotfiles-blue)](https://www.chezmoi.io)
+[![chezmoi: dotfiles manager](https://img.shields.io/badge/chezmoi-👩‍🎨_dotfiles-blue?logo=chezmoi&style=for-the-badge)](https://www.chezmoi.io)
 [![Ansible](https://img.shields.io/badge/ansible-automation-red)](https://www.ansible.com)
 [![CI](https://img.shields.io/github/actions/workflow/status/hetfs/dotfiles/ci.yml?branch=main)](https://github.com/hetfs/dotfiles/actions)
 [![Docs](https://img.shields.io/badge/docs-powered--by--docusaurus-green)](https://docusaurus.io)
