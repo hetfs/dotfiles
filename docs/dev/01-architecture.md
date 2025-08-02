@@ -1,20 +1,20 @@
 ---
-id: architecture-overview
-title: 🔁 Ansible + Dotfiles Architecture
+id: 01-architecture
+title: 🔁 Ansible + Chezmoi
 description: DRY, secure, and automated provisioning using Ansible and chezmoi.
 sidebar_position: 1
 ---
 
 # 🔁 Cross-Platform Automation with Ansible + Chezmoi
 
-This architecture merges [Ansible](https://www.ansible.com) and [chezmoi](https://www.chezmoi.io) into a clean, maintainable, and cross-platform provisioning system. Designed to be **declarative**, **modular**, and **secure**, it empowers reproducible dotfile and system setups across Linux, macOS, Windows, and WSL environments.
+This architecture merges [Ansible](https://www.ansible.com) and [chezmoi](https://www.chezmoi.io) into a clean, maintainable, and cross-platform provisioning system. Designed to be **declarative**, **modular**, and **secure**, it empowers reproducible dotfile and system setups across Windows, WSL, macOS, Ubuntu Linux, Arch Linux environments.
 
 ---
 
 ## ✨Core Philosophy
-- **Infrastructure as Code** - Fully version-controlled provisioning
-- **Reproducible Environments** - Identical setups across machines
-- **Progressive Enhancement** - Layered configuration approach
+* **Infrastructure as Code** Fully version-controlled provisioning
+* **Reproducible Environments** Identical setups across machines
+* **Progressive Enhancement** Layered configuration approach
 
 ### Technical Pillars
 | Principle | Implementation | Benefit |
@@ -73,7 +73,7 @@ sequenceDiagram
     participant A as Ansible
     participant S as Secrets
     participant T as Testing
-    
+
     C->>A: Triggers initial bootstrap
     A->>S: Retrieves encrypted secrets
     A->>T: Runs pre-commit validation
@@ -83,7 +83,7 @@ sequenceDiagram
 ```
 
 <details>
-<summary><strong>📁 Optimized Directory Structure</strong> (Best Practice Verified)</summary>
+<summary><strong>📁Dotfiles Directory Structure</strong> (Best Practice Verified)</summary>
 
 ```bash
 dotfiles/
@@ -309,7 +309,7 @@ curl -sL https://bit.ly/linux-bootstrap | bash
 | Staging | `make staging` | Pre-production validation |
 | Production | `make prod` | Secure deployment |
 
-### Lifecycle Management
+## Lifecycle Management
 ```mermaid
 gantt
     title Provisioning Timeline
@@ -346,7 +346,7 @@ roles/base/
 **Cross-Platform Tasks**:
 ```yaml
 # roles/base/tasks/main.yml
-- name: Configure base system
+* name: Configure base system
   include_tasks: "{{ ansible_os_family }}.yml"
   when: ansible_os_family in ['Debian', 'RedHat', 'Windows']
 ```
@@ -365,9 +365,9 @@ playbooks/ubuntu/tasks/
 ```yaml
 # playbooks/ubuntu/main.yml
 tasks:
-  - import_tasks: tasks/01-packages.yml
-  - import_tasks: tasks/02-services.yml
-  - import_tasks: tasks/03-networking.yml
+  * import_tasks: tasks/01-packages.yml
+  * import_tasks: tasks/02-services.yml
+  * import_tasks: tasks/03-networking.yml
     when: optimize_network
 ```
 
@@ -376,9 +376,9 @@ tasks:
 ```yaml
 # Windows example
 collections:
-  - name: community.windows
+  * name: community.windows
     version: 3.0.0
-  - name: chocolatey.chocolatey
+  * name: chocolatey.chocolatey
     version: 2.0.0
 
 roles:
