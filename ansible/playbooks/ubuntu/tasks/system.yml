@@ -1,0 +1,16 @@
+---
+- name: Set system timezone
+  timezone:
+    name: "{{ timezone }}"
+
+- name: Enable firewall
+  ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Allow essential ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+  loop: "{{ allowed_ports }}"

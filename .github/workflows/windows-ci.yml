@@ -1,0 +1,25 @@
+# File: .github/workflows/windows-ci.yml
+name: Windows CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ansible/playbooks/windows/**'
+      - 'config/roles/**'
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Ansible
+        run: choco install -y ansible
+
+      - name: Run Windows playbook
+        run: |
+          cd ansible
+          ansible-playbook playbooks/windows/main.yml --syntax-check
+          ansible-playbook playbooks/windows/main.yml --check --diff

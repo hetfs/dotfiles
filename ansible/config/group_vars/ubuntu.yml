@@ -1,0 +1,32 @@
+---
+ubuntu_core_packages:
+  - curl
+  - git
+  - vim
+  - htop
+  - gnupg
+  - ufw
+
+ubuntu_dev_packages:
+  - build-essential
+  - python3
+  - python3-pip
+  - nodejs
+  - npm
+  - golang
+  - docker.io
+
+asdf_tools:
+  - plugin: python
+    version: 3.11.4
+  - plugin: nodejs
+    version: 18.16.0
+  - plugin: golang
+    version: 1.20.5
+
+timezone: Africa/Accra
+allowed_ports: [22, 80, 443]
+
+security_hardening_enabled: true
+user_role: developer
+customize_gnome: true  # 👈 Add this to enable GNOME customization

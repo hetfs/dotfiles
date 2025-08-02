@@ -1,0 +1,22 @@
+---
+- name: Install Chocolatey
+  win_chocolatey:
+    name: chocolatey
+    state: present
+
+- name: Install core packages
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ windows_core_packages }}"
+  register: choco_install
+  until: choco_install is success
+  retries: 3
+  delay: 10
+
+- name: Install optional packages
+  win_chocolatey:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ windows_optional_packages }}"
+  when: install_optional_packages

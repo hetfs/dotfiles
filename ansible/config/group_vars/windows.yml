@@ -1,0 +1,7 @@
+# Windows-specific variables
+chocolatey_packages:
+  - git
+  - vscode
+  - 7zip
+
+win_firewall_profile: Domain

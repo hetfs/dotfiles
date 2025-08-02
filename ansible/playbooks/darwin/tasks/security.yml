@@ -1,0 +1,15 @@
+---
+- name: Enable firewall
+  command: /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+
+- name: Enable stealth mode
+  command: /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+
+- name: Install security updates
+  command: softwareupdate --install --all
+
+- name: Configure FileVault
+  command: fdesetup enable
+  when: enable_filevault
+  register: filevault_result
+  changed_when: "'already enabled' not in filevault_result.stdout"

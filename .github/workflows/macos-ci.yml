@@ -1,0 +1,47 @@
+name: macOS CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ansible/playbooks/darwin/**'
+      - 'config/roles/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ansible/playbooks/darwin/**'
+      - 'config/roles/**'
+
+jobs:
+  lint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Ansible
+        run: pip install ansible ansible-lint
+      - name: Lint playbook
+        run: ansible-lint ansible/playbooks/darwin/main.yml
+
+  test:
+    runs-on: macos-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Ansible
+        run: pip install ansible
+      - name: Install dependencies
+        run: |
+          cd ansible
+          ansible-galaxy install -r playbooks/darwin/requirements.yml
+      - name: Run syntax check
+        run: ansible-playbook ansible/playbooks/darwin/main.yml --syntax-check
+      - name: Run dry-run
+        run: ansible-playbook ansible/playbooks/darwin/main.yml --check --diff

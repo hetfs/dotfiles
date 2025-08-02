@@ -1,0 +1,22 @@
+---
+- name: Ensure SSH is installed (Debian)
+  ansible.builtin.apt:
+    name: openssh-server
+    state: present
+  when: ansible_os_family == "Debian"
+  become: true
+
+- name: Ensure SSH is installed (Arch)
+  ansible.builtin.pacman:
+    name: openssh
+    state: present
+  when: ansible_distribution == "Archlinux"
+  become: true
+
+- name: Ensure SSH service is enabled and running
+  ansible.builtin.service:
+    name: ssh
+    enabled: true
+    state: started
+  when: ansible_system in ['Linux']
+  become: true

@@ -1,0 +1,19 @@
+# 🍏 darwin/requirements.yml
+---
+collections:
+  - name: community.general
+    version: 5.0.0
+  - name: ansible.posix
+    version: 1.4.0
+
+roles:
+  - src: geerlingguy.mac
+    version: 1.0.0
+  - src: geerlingguy.homebrew
+    version: 3.0.0
+  - src: oefenweb.asdf
+    version: 3.0.0
+# - name: geerlingguy.homebrew
+# - name: geerlingguy.mac
+# - name: custom.dotfiles
+#   src: https://github.com/binahf/ansible-role-dotfiles

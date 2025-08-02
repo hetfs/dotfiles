@@ -1,0 +1,8 @@
+# Linux-specific variables
+core_packages:
+  - curl
+  - git
+  - htop
+  - tmux
+
+syslog_server: logs.example.com

@@ -1,0 +1,13 @@
+# File: ansible/playbooks/wsl/tasks/integration.yml
+---
+- name: Configure WSL integration
+  win_shell: |
+    wsl --set-version {{ wsl_distro }} 2
+    wsl --set-default-version 2
+    wsl -d {{ wsl_distro }} -e sudo sed -i 's/^\[network\]$/[network]\ngenerateHosts = false/' /etc/wsl.conf
+
+- name: Share Windows environment variables
+  template:
+    src: wsl_env.j2
+    dest: /etc/profile.d/wsl_env.sh
+    mode: 0644

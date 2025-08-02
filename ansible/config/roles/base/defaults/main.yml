@@ -1,0 +1,9 @@
+base_timezone: "UTC"
+base_locale: "en_US.UTF-8"
+
+base_users:
+  - name: "{{ ansible_user }}"
+    groups: ["sudo"]
+    shell: "/bin/bash"
+
+base_hostname: "{{ inventory_hostname }}"

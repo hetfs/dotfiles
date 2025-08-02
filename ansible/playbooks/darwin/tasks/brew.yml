@@ -1,0 +1,19 @@
+---
+- name: Install Homebrew
+  include_role:
+    name: geerlingguy.homebrew
+
+- name: Install core packages
+  homebrew:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ darwin_core_packages }}"
+
+- name: Install casks
+  homebrew:
+    name: "{{ item }}"
+    state: present
+    install_options: "--appdir=/Applications"
+    cask: yes
+  loop: "{{ darwin_casks }}"
+  when: install_gui_apps

@@ -1,0 +1,25 @@
+---
+- name: Install Xcode command line tools
+  command: xcode-select --install
+  args:
+    creates: /Library/Developer/CommandLineTools
+  register: xcode_result
+  failed_when: xcode_result.rc != 0 and 'already installed' not in xcode_result.stderr
+
+- name: Install development packages
+  homebrew:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ darwin_dev_packages }}"
+
+- name: Install asdf version manager
+  include_role:
+    name: oefenweb.asdf
+
+- name: Configure default tools
+  asdf:
+    plugin: "{{ item.plugin }}"
+    version: "{{ item.version }}"
+    state: present
+    asdf_path: "~/.asdf"
+  loop: "{{ asdf_tools }}"

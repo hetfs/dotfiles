@@ -1,0 +1,35 @@
+---
+# macOS specific variables
+darwin_core_packages:
+  - mas
+  - git
+  - bash-completion
+  - htop
+  - wget
+  - gnupg
+
+darwin_casks:
+  - iterm2
+  - visual-studio-code
+  - google-chrome
+  - slack
+  - 1password
+
+darwin_dev_packages:
+  - python
+  - nodejs
+  - go
+  - terraform
+  - awscli
+
+asdf_tools:
+  - plugin: python
+    version: 3.11.4
+  - plugin: nodejs
+    version: 18.16.0
+  - plugin: golang
+    version: 1.20.5
+
+# Security settings
+security_hardening_enabled: true
+enable_filevault: true

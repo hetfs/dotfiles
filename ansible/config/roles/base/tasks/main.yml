@@ -1,0 +1,14 @@
+---
+- name: Set system locale (Debian/Ubuntu)
+  ansible.builtin.lineinfile:
+    path: /etc/locale.gen
+    regexp: '^#?{{ base_locale }}'
+    line: '{{ base_locale }} UTF-8'
+    state: present
+  when: ansible_os_family == 'Debian'
+  become: true
+
+- name: Generate locale
+  ansible.builtin.command: locale-gen
+  when: ansible_os_family == 'Debian'
+  become: true

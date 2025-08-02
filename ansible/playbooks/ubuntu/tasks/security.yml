@@ -1,0 +1,17 @@
+---
+- name: Apply security role
+  include_role:
+    name: geerlingguy.security
+
+- name: Install unattended-upgrades
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Enable unattended-upgrades
+  command: dpkg-reconfigure -f noninteractive unattended-upgrades
+
+- name: Ensure fail2ban is installed
+  apt:
+    name: fail2ban
+    state: present

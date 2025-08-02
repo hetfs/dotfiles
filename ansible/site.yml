@@ -1,0 +1,32 @@
+# ansible/site.yml
+---
+- name: 🚀 Multi-Platform Provisioning Entry Point
+  hosts: all
+  gather_facts: yes
+  become: yes
+
+  pre_tasks:
+    - name: "📦 Show detected platform info"
+      debug:
+        msg: "OS Family: {{ ansible_os_family }}, Distribution: {{ ansible_distribution }}"
+
+  tasks:
+    - name: "🧭 Include Ubuntu playbook"
+      ansible.builtin.include_tasks: "playbooks/ubuntu/main.yml"
+      when: ansible_distribution == "Ubuntu"
+
+    - name: "🧭 Include Arch playbook"
+      ansible.builtin.include_tasks: "playbooks/arch/main.yml"
+      when: ansible_distribution == "Archlinux"
+
+    - name: "🧭 Include macOS playbook"
+      ansible.builtin.include_tasks: "playbooks/darwin/main.yml"
+      when: ansible_system == "Darwin"
+
+    - name: "🧭 Include Windows playbook"
+      ansible.builtin.import_playbook: "playbooks/windows/main.yml"
+      when: ansible_os_family == "Windows"
+
+    - name: "🧭 Include WSL-specific playbook"
+      ansible.builtin.include_tasks: "playbooks/wsl/main.yml"
+      when: ansible_kernel | lower is search("microsoft")

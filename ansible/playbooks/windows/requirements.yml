@@ -1,0 +1,17 @@
+# 🪟 windows/requirements.yml
+---
+collections:
+  - name: community.windows
+    version: 3.0.0
+  - name: chocolatey.chocolatey
+    version: 2.0.0
+  - name: ansible.windows
+    version: 2.0.0
+
+roles:
+  - name: opstree.win_initial_setup
+    version: 1.1.0
+# - name: community.windows
+# - name: chocolatey.chocolatey
+# - name: custom.win_config
+#   src: https://github.com/binahf/ansible-role-windows-config

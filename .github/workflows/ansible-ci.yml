@@ -1,0 +1,43 @@
+name: Ansible CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Lint Ansible
+        run: |
+          pip install ansible-lint
+          ansible-lint ansible/playbooks/ -x 204
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      matrix:
+        os: ['ubuntu', 'windows', 'darwin']
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Ansible
+        run: sudo apt update && sudo apt install -y ansible
+      
+      - name: Install dependencies
+        run: |
+          cd ansible
+          find playbooks -name requirements.yml -exec ansible-galaxy install -r {} \;
+          
+      - name: Run syntax check
+        run: |
+          cd ansible
+          ansible-playbook playbooks/${{ matrix.os }}/main.yml --syntax-check
+          
+      - name: Run dry-run
+        run: |
+          cd ansible
+          ansible-playbook playbooks/${{ matrix.os }}/main.yml --check --diff

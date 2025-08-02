@@ -1,0 +1,9 @@
+# Global variables
+system_timezone: UTC
+admin_user: ansible-admin
+backup_dir: /backups
+package_manager: "{{ 'apt' if ansible_os_family == 'Debian' else 
+                    'dnf' if ansible_os_family == 'RedHat' else 
+                    'pacman' if ansible_os_family == 'Archlinux' else 
+                    'brew' if ansible_os_family == 'Darwin' else 
+                    'chocolatey' if ansible_os_family == 'Windows' else 'apt' }}"

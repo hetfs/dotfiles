@@ -1,0 +1,36 @@
+---
+- name: Configure macOS system
+  hosts: darwin
+  gather_facts: true
+  become: false  # Homebrew doesn't require root
+  vars_files:
+    - "../../config/group_vars/all.yml"
+    - "../../config/group_vars/darwin.yml"
+    - "{{ vault_file | default('secrets/ansible-vault/darwin.yml') }}"
+
+  tasks:
+    - name: Install Homebrew and core packages
+      include_tasks: tasks/brew.yml
+
+    - name: Configure system settings
+      include_tasks: tasks/system.yml
+
+    - name: Setup developer tools
+      include_tasks: tasks/dev_tools.yml
+      when: user_role == "developer"
+
+    - name: Configure security settings
+      include_tasks: tasks/security.yml
+      when: security_hardening_enabled
+
+  # Handlers section (previously empty)
+  handlers:
+    - name: Restart System Preferences
+      command: killall System Preferences
+      args:
+        warn: false
+
+    - name: Restart Finder
+      command: killall Finder
+      args:
+        warn: false

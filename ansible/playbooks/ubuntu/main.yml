@@ -1,0 +1,26 @@
+---
+# playbooks/ubuntu/main.yml
+- name: 🐧 Ubuntu System Provisioning
+  hosts: ubuntu
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - "../../config/group_vars/all.yml"
+    - "../../config/group_vars/ubuntu.yml"
+    - "{{ vault_file | default('secrets/ansible-vault/ubuntu.yml') }}"
+
+  tasks:
+    - name: 📦 Install Core Packages
+      include_tasks: tasks/packages.yml
+
+    - name: ⚙️ Configure System Settings
+      include_tasks: tasks/system.yml
+
+    - name: 🧰 Developer Environment Setup
+      include_tasks: tasks/dev_tools.yml
+      when: user_role == "developer"
+
+    - name: 🔐 Security Hardening
+      include_tasks: tasks/security.yml
+      when: security_hardening_enabled

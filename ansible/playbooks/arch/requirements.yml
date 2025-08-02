@@ -1,0 +1,9 @@
+# 🅰️ arch/requirements.yml
+- name: tschifftner.pacman
+  src: https://github.com/tschifftner/ansible-role-pacman
+
+- name: custom.yay
+  src: https://github.com/binahf/ansible-role-yay
+  version: main
+
+- name: geerlingguy.git

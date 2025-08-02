@@ -1,0 +1,21 @@
+---
+- name: Enable Windows Defender
+  win_defender:
+    realtime_protection: enabled
+    behavior_monitoring: enabled
+    scan_type: full
+
+- name: Configure firewall
+  win_firewall_rule:
+    name: "Allow Ansible"
+    localport: 5986
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: yes
+
+- name: Apply CIS benchmarks
+  include_role:
+    name: ../../config/roles/security
+    tasks_from: windows.yml

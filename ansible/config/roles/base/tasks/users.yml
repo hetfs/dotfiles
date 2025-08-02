@@ -1,0 +1,9 @@
+---
+- name: Ensure base users exist
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default([]) }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    state: present
+  loop: "{{ base_users }}"
+  become: true

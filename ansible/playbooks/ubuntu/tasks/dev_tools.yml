@@ -1,0 +1,26 @@
+---
+- name: Install development packages
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ ubuntu_dev_packages }}"
+
+- name: Install asdf version manager
+  include_role:
+    name: oefenweb.asdf
+
+- name: Install programming language versions
+  asdf:
+    plugin: "{{ item.plugin }}"
+    version: "{{ item.version }}"
+    state: present
+  loop: "{{ asdf_tools }}"
+
+- name: Setup dotfiles
+  include_role:
+    name: geerlingguy.dotfiles
+
+- name: Customize GNOME desktop
+  include_role:
+    name: petermosmans.customize-gnome
+  when: customize_gnome

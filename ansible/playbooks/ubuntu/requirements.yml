@@ -1,0 +1,20 @@
+---
+# 🐧ubuntu/requirements.yml
+
+collections:
+  - name: community.general
+    version: 7.0.0
+  - name: ansible.posix
+    version: 1.5.4
+
+roles:
+  - src: geerlingguy.docker
+    version: 6.0.1
+  - src: geerlingguy.security
+    version: 2.0.0
+  - src: geerlingguy.dotfiles
+    version: 1.3.1
+  - src: oefenweb.asdf
+    version: 3.0.0
+  - src: petermosmans.customize-gnome
+    version: 2.0.2

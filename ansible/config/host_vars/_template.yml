@@ -1,0 +1,4 @@
+# Host-specific variables template
+host_specific_var: value
+custom_role: special-config
+backup_schedule: "0 2 * * *"
