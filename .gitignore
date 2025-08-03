@@ -18,3 +18,64 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# 🔐 Secrets and local configuration
+.env
+.env.*.local
+
+# 🐘 Ansible
+*.retry
+.cache/
+ansible/cache/
+ansible/.retry/
+
+# 🛠 Logs and artifacts
+*.log
+*.bak
+*.tmp
+*.swp
+*.orig
+
+# 🐍 Python
+__pycache__/
+*.py[cod]
+pip-log.txt
+env/
+.venv/
+venv/
+
+# 💻 OS-specific
+.DS_Store
+Thumbs.db
+
+# 🏠 Chezmoi
+chezmoi/private_*
+chezmoi/encrypted_*
+chezmoi/.chezmoi*
+chezmoi/.chezmoi*
+
+# 🐳 Docker
+*.tar
+*.pid
+.docker/
+
+# 💥 IDE and editor metadata
+.vscode/
+.idea/
+*.code-workspace
+*.sublime*
+
+# 💡 GitHub Actions
+.github/workflows/.env
+.github/workflows/__pycache__/
+
+# 🚧 Terraform or cloud (if ever integrated)
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# 🚀 CI/CD cache (optional)
+.nox/
+.tox/
+.coverage
+.cache/

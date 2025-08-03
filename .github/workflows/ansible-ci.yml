@@ -1,43 +1,75 @@
-name: Ansible CI
+name: 🔁 Ansible CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+env:
+  ANSIBLE_CONFIG: ansible/ansible.cfg
 
 jobs:
   lint:
+    name: 🧹 Lint Ansible Playbooks
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Lint Ansible
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🐍 Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: 📦 Install Ansible Lint
         run: |
-          pip install ansible-lint
-          ansible-lint ansible/playbooks/ -x 204
+          python -m pip install --upgrade pip
+          pip install ansible ansible-lint
+
+      - name: 🚨 Run ansible-lint (ignore rule 204)
+        run: ansible-lint ansible/playbooks/ -x 204
 
   test:
+    name: 🧪 Test Playbooks on ${{ matrix.os }}
     runs-on: ubuntu-latest
     needs: lint
     strategy:
       matrix:
-        os: ['ubuntu', 'windows', 'darwin']
+        os: [ubuntu, windows, darwin]  # Simulates each platform’s playbook
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Install Ansible
-        run: sudo apt update && sudo apt install -y ansible
-      
-      - name: Install dependencies
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🐍 Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: 📦 Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: 📥 Install Galaxy Roles and Collections
         run: |
           cd ansible
           find playbooks -name requirements.yml -exec ansible-galaxy install -r {} \;
-          
-      - name: Run syntax check
+
+      - name: ✅ Syntax Check for ${{ matrix.os }}
         run: |
-          cd ansible
-          ansible-playbook playbooks/${{ matrix.os }}/main.yml --syntax-check
-          
-      - name: Run dry-run
+          ansible-playbook ansible/playbooks/${{ matrix.os }}/main.yml --syntax-check
+
+      - name: 🔍 Check Mode (Dry Run) for ${{ matrix.os }}
         run: |
-          cd ansible
-          ansible-playbook playbooks/${{ matrix.os }}/main.yml --check --diff
+          ansible-playbook ansible/playbooks/${{ matrix.os }}/main.yml --check --diff
+
+  # Optional: Add full run or idempotency checks later
+  # idempotency:
+  #   name: 🔄 Idempotency Check
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   steps:
+  #     - name: 🔁 Run Playbooks Twice and Ensure Zero Changes
