@@ -1,0 +1,9 @@
+# 🔁 roles/base/tasks/fonts.yml (Platform Dispatcher)
+- name: "Set platform for font installation"
+  set_fact:
+    fonts_platform: >-
+      {{ fonts_platform_override
+        | default(ansible_env.WSL_DISTRO_NAME is defined | ternary('wsl', ansible_distribution | lower)) }}
+
+- name: "Include platform-specific font task"
+  include_tasks: "{{ playbook_dir }}/{{ fonts_platform }}/tasks/fonts.yml"

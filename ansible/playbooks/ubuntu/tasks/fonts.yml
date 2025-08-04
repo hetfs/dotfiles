@@ -1,0 +1,15 @@
+# 🐧 playbooks/ubuntu/tasks/fonts.yml
+- name: "Install system fonts via apt"
+  become: true
+  apt:
+    name:
+      - fonts-firacode
+      - fonts-hack-ttf
+      - fonts-jetbrains-mono
+    state: present
+    update_cache: true
+  when: not install_nerd_fonts
+
+- name: "Install Nerd Fonts"
+  include_tasks: "{{ playbook_dir }}/base/tasks/install_nerd_fonts.yml"
+  when: install_nerd_fonts

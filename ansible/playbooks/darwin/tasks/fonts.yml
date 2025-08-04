@@ -1,0 +1,13 @@
+# 🍏 playbooks/darwin/tasks/fonts.yml
+
+- name: "Tap brew font cask"
+  community.general.homebrew_tap:
+    name: homebrew/cask-fonts
+    state: present
+
+- name: "Install fonts via Homebrew"
+  community.general.homebrew_cask:
+    name:
+      - font-jetbrains-mono-nerd-font
+      - font-fira-code-nerd-font
+    state: present

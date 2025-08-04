@@ -1,0 +1,19 @@
+# 🏹 playbooks/arch/tasks/fonts.yml
+
+- name: "Install system fonts via pacman"
+  become: true
+  pacman:
+    name:
+      - ttf-fira-code
+      - ttf-jetbrains-mono
+    state: present
+    update_cache: true
+  when: not install_nerd_fonts
+
+- name: "Install Nerd Fonts from AUR"
+  aur:
+    name:
+      - nerd-fonts-fira-code
+      - nerd-fonts-jetbrains-mono
+    state: present
+  when: install_nerd_fonts

@@ -1,0 +1,13 @@
+# 🪟 playbooks/windows/tasks/fonts.yml
+
+- name: "Install fonts via Chocolatey"
+  win_chocolatey:
+    name:
+      - firacode
+      - jetbrainsmono
+    state: present
+  ignore_errors: true  # fallback if choco unavailable
+
+- name: "Install Nerd Fonts manually"
+  include_tasks: "{{ playbook_dir }}/base/tasks/install_nerd_fonts.yml"
+  when: install_nerd_fonts

@@ -1,0 +1,27 @@
+# 📦 roles/base/tasks/install_nerd_fonts.yml
+
+- name: "Ensure fonts dir exists"
+  file:
+    path: "{{ ansible_env.HOME }}/.local/share/fonts"
+    state: directory
+    mode: '0755'
+  when: ansible_system in ['Linux', 'Darwin']
+
+- name: "Download Nerd Fonts"
+  get_url:
+    url: "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/{{ item | replace('-', '') | capitalize }}.zip"
+    dest: "/tmp/{{ item }}.zip"
+  loop: "{{ fonts }}"
+  when: ansible_system in ['Linux', 'Darwin']
+
+- name: "Extract to fonts directory"
+  unarchive:
+    src: "/tmp/{{ item }}.zip"
+    dest: "{{ ansible_env.HOME }}/.local/share/fonts"
+    remote_src: true
+  loop: "{{ fonts }}"
+  when: ansible_system in ['Linux', 'Darwin']
+
+- name: "Refresh font cache"
+  command: fc-cache -fv
+  when: ansible_system == 'Linux'

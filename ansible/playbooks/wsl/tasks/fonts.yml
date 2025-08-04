@@ -1,0 +1,5 @@
+# 💻 playbooks/wsl/tasks/fonts.yml
+
+- name: "Skip WSL font installation"
+  debug:
+    msg: "Font installation skipped — configure via host terminal (e.g., Windows Terminal)."
