@@ -1,0 +1,14 @@
+---
+- name: 🧼 Remove system temp files
+  win_file:
+    path: C:\Windows\Temp
+    state: absent
+  ignore_errors: true
+  tags: [maintenance, temp]
+
+- name: 🧼 Remove user temp files
+  win_file:
+    path: "{{ ansible_env.TEMP }}"
+    state: absent
+  ignore_errors: true
+  tags: [maintenance, temp]

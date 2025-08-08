@@ -1,0 +1,23 @@
+---
+- name: 🧩 Ensure winget is available
+  ansible.windows.win_stat:
+    path: "{{ ansible_env.ProgramData }}\\Microsoft\\Windows\\AppRepository\\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
+  register: winget_installed
+  failed_when: not winget_installed.stat.exists
+  tags: [cli, pwsh]
+
+- name: 🌀 Install PowerShell (pwsh) via winget
+  ansible.windows.win_shell: |
+    winget install --id Microsoft.Powershell --exact --silent --accept-package-agreements --accept-source-agreements
+  args:
+    executable: cmd.exe
+  register: pwsh_output
+  changed_when: "'No applicable upgrade' not in pwsh_output.stdout"
+  tags: [cli, pwsh]
+
+- name: 🔍 Verify pwsh installation
+  ansible.windows.win_command: powershell -Command "(Get-Command pwsh.exe).Source"
+  register: pwsh_check
+  changed_when: false
+  failed_when: pwsh_check.rc != 0 or "'pwsh.exe'" not in pwsh_check.stdout | lower
+  tags: [cli, pwsh]

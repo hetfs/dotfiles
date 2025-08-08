@@ -1,0 +1,205 @@
+---
+# ===========================================================
+# WinRM HTTPS Certificate Role - Main Tasks
+# Handles importing PFX, generating CSR, or self-signed cert.
+# Automatically configures WinRM listener and firewall rules.
+# ===========================================================
+
+# -----------------------------------------------------------
+# 0️⃣ Fail-fast: Validate certificate configuration
+# -----------------------------------------------------------
+# This ensures we stop before doing anything if no certificate
+# method is selected. Prevents accidental misconfiguration.
+# -----------------------------------------------------------
+- name: 🚦 Validate WinRM certificate configuration
+  ansible.builtin.assert:
+    that:
+      - (winrm_cert_pfx_path | default('') | trim != '') or (winrm_generate_csr | bool) or (winrm_self_signed | bool)
+    fail_msg: >-
+      ❌ No valid certificate configuration found for WinRM HTTPS.
+      Please configure at least one of the following before running the role:
+
+        1) winrm_cert_pfx_path — path to a .pfx to import
+           (current length={{ winrm_cert_pfx_path | default('') | length }})
+
+        2) winrm_generate_csr = true
+           (currently {{ winrm_generate_csr }})
+
+        3) winrm_self_signed = true
+           (currently {{ winrm_self_signed }})
+
+      Tip: For production, store sensitive values like winrm_cert_password in Ansible Vault.
+
+# -----------------------------------------------------------
+# 1️⃣ Ensure certificate directory exists
+# -----------------------------------------------------------
+- name: 🛡️ Ensure directory exists for certificate
+  ansible.windows.win_file:
+    path: "{{ winrm_cert_pfx_path | dirname if winrm_cert_pfx_path else 'C:\\certs' }}"
+    state: directory
+
+# -----------------------------------------------------------
+# 2️⃣ Import certificate from PFX (if provided)
+# -----------------------------------------------------------
+- name: 🔐 Copy PFX certificate to target
+  ansible.windows.win_copy:
+    src: "{{ winrm_cert_pfx_path }}"
+    dest: "{{ winrm_cert_pfx_path }}"
+  when:
+    - winrm_cert_pfx_path | default('') | length > 0
+    - winrm_cert_pfx_path is file
+
+- name: 📥 Import PFX into LocalMachine\My store
+  ansible.windows.win_certificate_store:
+    path: "{{ winrm_cert_pfx_path }}"
+    password: "{{ winrm_cert_password }}"
+    store_name: My
+    store_location: LocalMachine
+    key_exportable: yes
+    state: present
+  when:
+    - winrm_cert_pfx_path | default('') | length > 0
+
+# -----------------------------------------------------------
+# 3️⃣ Generate CSR if requested
+# -----------------------------------------------------------
+- name: 📝 Generate CSR for WinRM HTTPS
+  ansible.windows.win_shell: |
+    $params = @{
+      Subject = "CN={{ winrm_hostname }}"
+      KeyAlgorithm = "RSA"
+      KeyLength = 2048
+      CertStoreLocation = "Cert:\LocalMachine\My"
+    }
+    $req = New-SelfSignedCertificate @params -KeyExportPolicy Exportable -DnsName "{{ winrm_hostname }}" -Type Custom -TextExtension @("2.5.29.17={text}dns={{ winrm_hostname }}")
+    $csrPath = "$env:TEMP\winrm_https.req"
+    $null = Export-Certificate -Cert $req -FilePath $csrPath
+    Write-Output $csrPath
+  register: winrm_csr_result
+  when:
+    - winrm_generate_csr | bool
+    - winrm_cert_pfx_path | default('') | length == 0
+
+# -----------------------------------------------------------
+# 4️⃣ Generate self-signed cert if no PFX and CSR not requested
+# -----------------------------------------------------------
+- name: 🪪 Generate self-signed certificate for WinRM HTTPS
+  ansible.windows.win_shell: |
+    New-SelfSignedCertificate -DnsName "{{ winrm_hostname }}" `
+      -CertStoreLocation "Cert:\LocalMachine\My" `
+      -KeyExportPolicy Exportable `
+      -NotAfter (Get-Date).AddYears(3)
+  when:
+    - winrm_self_signed | bool
+    - not winrm_generate_csr | bool
+    - winrm_cert_pfx_path | default('') | length == 0
+
+# -----------------------------------------------------------
+# 5️⃣ Get latest matching certificate thumbprint
+# -----------------------------------------------------------
+- name: 🔎 Detect certificate thumbprint
+  ansible.windows.win_shell: |
+    $cert = Get-ChildItem -Path Cert:\LocalMachine\My |
+      Where-Object { $_.Subject -like "*CN={{ winrm_hostname }}*" } |
+      Sort-Object NotAfter -Descending |
+      Select-Object -First 1
+    if ($cert) { $cert.Thumbprint } else { Write-Output "" }
+  register: winrm_cert_thumbprint_raw
+
+- name: 🧩 Save detected thumbprint as fact
+  ansible.builtin.set_fact:
+    winrm_cert_thumbprint: "{{ winrm_cert_thumbprint_raw.stdout_lines[0] | default('') | trim | replace(' ', '') }}"
+
+# -----------------------------------------------------------
+# 6️⃣ Configure HTTPS WinRM listener
+# -----------------------------------------------------------
+- name: ✅ Ensure HTTPS WinRM listener exists
+  ansible.windows.winrm:
+    transport: https
+    hostname: "{{ winrm_hostname }}"
+    certificate_thumbprint: "{{ winrm_cert_thumbprint }}"
+    port: 5986
+    state: present
+    ipv4: '*'
+
+# -----------------------------------------------------------
+# 7️⃣ Enable certificate authentication
+# -----------------------------------------------------------
+- name: 🧩 Enable WinRM certificate authentication
+  ansible.windows.win_shell: |
+    winrm set winrm/config/service/auth '@{Certificate="true"}'
+
+# -----------------------------------------------------------
+# 8️⃣ Allow WinRM HTTPS in firewall
+# -----------------------------------------------------------
+- name: 🔥 Allow WinRM HTTPS in firewall
+  ansible.windows.win_firewall_rule:
+    name: "WinRM over HTTPS"
+    localport: 5986
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    profile: "{{ win_firewall_profile }}"
+
+# -----------------------------------------------------------
+# 9️⃣ Test HTTPS connectivity from control node
+# -----------------------------------------------------------
+- name: 🔍 Test WinRM HTTPS connectivity
+  delegate_to: localhost
+  ansible.builtin.shell: |
+    pwsh -NoProfile -Command "
+      try {
+        Test-WSMan -ComputerName {{ winrm_hostname }} -Port 5986 -Authentication Default -UseSSL | Out-Null
+        Write-Output 'OK'
+      } catch { Write-Output 'FAIL' }
+    "
+  register: winrm_https_test
+  changed_when: false
+
+# -----------------------------------------------------------
+# 🔄 Optional HTTP fallback if HTTPS fails
+# -----------------------------------------------------------
+- block:
+    - name: ⚠️ Warn about HTTPS failure
+      ansible.builtin.debug:
+        msg: "⚠️ HTTPS WinRM connection failed — switching to HTTP."
+
+    - name: 🛑 Remove broken HTTPS listener
+      ansible.windows.winrm:
+        transport: https
+        state: absent
+
+    - name: ♻️ Ensure HTTP WinRM listener
+      ansible.windows.winrm:
+        transport: http
+        hostname: "{{ winrm_hostname }}"
+        port: 5985
+        state: present
+        ipv4: '*'
+
+    - name: 🔥 Allow WinRM HTTP in firewall
+      ansible.windows.win_firewall_rule:
+        name: "WinRM over HTTP"
+        localport: 5985
+        action: allow
+        direction: in
+        protocol: tcp
+        state: present
+        profile: "{{ win_firewall_profile }}"
+
+    - name: 📝 Update runtime inventory for HTTP
+      ansible.builtin.set_fact:
+        ansible_winrm_transport: basic
+        ansible_port: 5985
+        ansible_winrm_server_cert_validation: ignore
+
+    - name: 💾 Persist HTTP fallback in hostvars
+      ansible.builtin.add_host:
+        name: "{{ inventory_hostname }}"
+        ansible_winrm_transport: basic
+        ansible_port: 5985
+        ansible_winrm_server_cert_validation: ignore
+  when:
+    - winrm_use_http_fallback | bool
+    - winrm_https_test.stdout is search('FAIL')

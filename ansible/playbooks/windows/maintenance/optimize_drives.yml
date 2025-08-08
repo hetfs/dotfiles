@@ -1,0 +1,6 @@
+---
+- name: ⚙️ Optimize drives (defrag or trim)
+  ansible.windows.win_shell: |
+    Optimize-Volume -DriveLetter {{ item }} -Verbose
+  loop: "{{ include_volumes }}"
+  tags: [maintenance, optimize]

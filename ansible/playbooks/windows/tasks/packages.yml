@@ -1,22 +1,40 @@
 ---
-- name: Install Chocolatey
-  win_chocolatey:
-    name: chocolatey
-    state: present
+# 📦 Install essential packages using winget and Chocolatey if available
 
-- name: Install core packages
+- name: "🔍 Check if winget is available"
+  ansible.windows.win_command: "where.exe winget"
+  register: winget_check
+  ignore_errors: true
+  changed_when: false
+
+- name: "📦 Install packages via winget"
+  win_shell: |
+    winget install --accept-package-agreements --accept-source-agreements --silent {{ item }}
+  loop:
+    - Microsoft.PowerShell
+    - Git.Git
+    - Microsoft.WindowsTerminal
+    - 7zip.7zip
+  when: winget_check.rc == 0
+  tags: [winget]
+
+- name: "📦 (Fallback) Install Chocolatey"
+  win_shell: |
+    Set-ExecutionPolicy Bypass -Scope Process -Force;
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+    iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+  args:
+    creates: C:\ProgramData\chocolatey\bin\choco.exe
+  when: winget_check.rc != 0
+
+- name: "🍫 Install packages with Chocolatey"
   win_chocolatey:
     name: "{{ item }}"
     state: present
-  loop: "{{ windows_core_packages }}"
-  register: choco_install
-  until: choco_install is success
-  retries: 3
-  delay: 10
-
-- name: Install optional packages
-  win_chocolatey:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ windows_optional_packages }}"
-  when: install_optional_packages
+  loop:
+    - git
+    - 7zip
+    - powershell-core
+    - windows-terminal
+  when: winget_check.rc != 0
+  tags: [choco]

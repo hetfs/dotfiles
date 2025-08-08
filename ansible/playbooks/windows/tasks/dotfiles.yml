@@ -1,0 +1,62 @@
+---
+- name: 🛠️ Ensure Chezmoi is installed
+  win_command: winget install --id twpayne.chezmoi --source winget --accept-source-agreements --accept-package-agreements
+  args:
+    creates: C:\Program Files\chezmoi\chezmoi.exe
+  register: chezmoi_install
+  changed_when: "'No applicable update' not in chezmoi_install.stdout"
+
+- name: 🗂️ Create Chezmoi config & data directories
+  win_file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ ansible_env.USERPROFILE }}\\.config\\chezmoi"
+    - "{{ ansible_env.USERPROFILE }}\\.local\\share\\chezmoi"
+
+- name: 🧠 Detect WSL presence (dual boot/shared config detection)
+  win_stat:
+    path: C:\Users\{{ ansible_user }}\AppData\Local\Packages\CanonicalGroupLimited.UbuntuonWindows_*
+  register: wsl_detected
+
+- name: 📦 Initialize chezmoi if not already initialized
+  win_command: >
+    chezmoi init {{ dotfiles_repo_url }}
+  args:
+    chdir: "{{ ansible_env.USERPROFILE }}"
+  when: not (ansible_env.USERPROFILE + "\\.local\\share\\chezmoi") | path_exists
+
+- name: 🔐 Ensure secrets are injected (chezmoi secrets support)
+  win_command: >
+    chezmoi secret add windows_password "{{ vault_windows_password }}"
+  environment:
+    CHEZMOI_PASSWORD: "{{ vault_windows_password }}"
+  when: vault_windows_password is defined
+
+- name: ⚡️ Apply Chezmoi configuration
+  win_command: chezmoi apply
+  args:
+    chdir: "{{ ansible_env.USERPROFILE }}"
+
+- name: ⏰ Setup Scheduled Task for daily chezmoi apply
+  win_scheduled_task:
+    name: "Chezmoi Auto Sync"
+    description: "Automatically apply chezmoi dotfiles daily"
+    actions:
+      - path: "C:\\Program Files\\chezmoi\\chezmoi.exe"
+        arguments: "apply"
+        working_directory: "{{ ansible_env.USERPROFILE }}"
+    triggers:
+      - type: daily
+        start_boundary: '08:00:00'
+    username: "SYSTEM"
+    run_level: highest
+    state: present
+    enabled: true
+    hidden: false
+
+- name: 🧼 Debug WSL status and chezmoi installation
+  debug:
+    msg: >
+      Chezmoi installed. WSL detected: {{ wsl_detected.stat.exists }}.
+      Auto-sync task created.

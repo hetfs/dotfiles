@@ -1,0 +1,23 @@
+# test/molecule/windows/verify.yml
+---
+- name: Verify that required packages are installed
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Check winget install presence
+      win_command: winget --version
+      register: winget_check
+      failed_when: false
+      changed_when: false
+
+    - name: Verify software installed via winget
+      win_command: winget list {{ item.name | default(item) }}
+      loop: "{{ winget_packages }}"
+      when: winget_check.rc == 0
+
+    - name: Verify software installed via chocolatey
+      win_command: choco list --local-only --exact {{ item.name | default(item) }}
+      loop: "{{ choco_installed_packages }}"
+
+    - name: ✅ Ensure defragmentation task runs without errors
+      include_tasks: ../../ansible/playbooks/windows/tasks/defrag.yml

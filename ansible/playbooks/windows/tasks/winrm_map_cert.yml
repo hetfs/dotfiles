@@ -1,0 +1,50 @@
+---
+- name: 🛂 Ensure certificate mapping for WinRM user
+  win_shell: |
+    $thumb = '{{ winrm_cert_thumbprint }}'
+    $user = '{{ ansible_user }}'
+    $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb }
+    if ($null -eq $cert) {
+      Write-Error "Certificate not found with thumbprint $thumb"
+      exit 1
+    }
+    $sid = (New-Object System.Security.Principal.NTAccount($user)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+    $mapping = @"
+    <Mapping>
+      <Rule>
+        <CertificateThumbprint>$thumb</CertificateThumbprint>
+        <UserSid>$sid</UserSid>
+      </Rule>
+    </Mapping>
+    "@
+    Set-Item -Path WSMan:\localhost\ClientCertificate -Value $mapping
+  register: cert_mapping_result
+  ignore_errors: yes
+
+- name: ♻️ Restart WinRM to apply certificate mapping
+  win_service:
+    name: WinRM
+    state: restarted
+  when: cert_mapping_result is succeeded
+
+- name: ✅ Validate HTTPS WinRM connection
+  delegate_to: localhost
+  winrm:
+    endpoint: "https://{{ inventory_hostname }}:5986/wsman"
+    transport: certificate
+    cert_path: "{{ winrm_client_cert_path }}"
+    cert_key_path: "{{ winrm_client_key_path }}"
+    server_cert_validation: validate
+    operation_timeout_sec: 10
+  register: winrm_https_check
+  ignore_errors: yes
+
+- name: 🔁 Fallback to HTTP if HTTPS failed
+  set_fact:
+    ansible_port: 5985
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+  when: winrm_https_check is failed
+
+- name: 🧪 Test WinRM shell execution after mapping
+  win_shell: hostname

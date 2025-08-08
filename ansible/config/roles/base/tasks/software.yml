@@ -1,0 +1,8 @@
+---
+- name: Install software packages using winget or chocolatey
+  import_tasks: "{{ playbook_dir }}/windows/tasks/winget.yml"
+  when: ansible_facts['os_family'] == 'Windows'
+
+- name: Fallback to chocolatey
+  import_tasks: "{{ playbook_dir }}/windows/tasks/chocolatey.yml"
+  when: ansible_facts['os_family'] == 'Windows'

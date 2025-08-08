@@ -1,0 +1,9 @@
+---
+- name: 🖥️ Set Windows hostname
+  ansible.windows.win_hostname:
+    name: "{{ custom_hostname }}"
+  register: restart
+
+- name: 🔁 Reboot if hostname changed
+  ansible.windows.win_reboot:
+  when: restart.reboot_required

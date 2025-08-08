@@ -1,0 +1,83 @@
+---
+- name: ✅ Ensure HTTPS WinRM listener is present
+  ansible.windows.winrm:
+    transport: https
+    certificate_thumbprint: "{{ winrm_cert_thumbprint }}"
+    hostname: "{{ winrm_hostname }}"
+    port: 5986
+    state: present
+    ipv4: '*'
+
+- name: 🧩 Enable WinRM Certificate Authentication
+  ansible.windows.win_shell: |
+    winrm set winrm/config/service/auth '@{Certificate="true"}'
+
+- name: 🔥 Allow WinRM HTTPS in firewall
+  ansible.windows.win_firewall_rule:
+    name: "WinRM over HTTPS"
+    localport: 5986
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    profile: "{{ win_firewall_profile }}"
+
+# --- Connectivity Validation ---
+- name: 🔍 Test WinRM HTTPS connectivity from Ansible control node
+  delegate_to: localhost
+  ansible.builtin.shell: |
+    pwsh -NoProfile -Command "
+      try {
+        Test-WSMan -ComputerName {{ winrm_hostname }} -Port 5986 -Authentication Default -UseSSL | Out-Null
+        Write-Output 'OK'
+      } catch { Write-Output 'FAIL' }
+    "
+  register: winrm_https_test
+  changed_when: false
+
+- name: ⚠️ Warn if HTTPS WinRM test failed
+  ansible.builtin.debug:
+    msg: "⚠️ HTTPS WinRM connection failed. Falling back to HTTP."
+  when: winrm_https_test.stdout is search('FAIL')
+
+# --- Fallback to HTTP if HTTPS failed ---
+- name: 🛑 Remove HTTPS listener if broken
+  ansible.windows.winrm:
+    transport: https
+    state: absent
+  when: winrm_https_test.stdout is search('FAIL')
+
+- name: ♻️ Ensure HTTP WinRM listener is present (fallback)
+  ansible.windows.winrm:
+    transport: http
+    hostname: "{{ winrm_hostname }}"
+    port: 5985
+    state: present
+    ipv4: '*'
+  when: winrm_https_test.stdout is search('FAIL')
+
+- name: 🔥 Allow WinRM HTTP in firewall (fallback)
+  ansible.windows.win_firewall_rule:
+    name: "WinRM over HTTP"
+    localport: 5985
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    profile: "{{ win_firewall_profile }}"
+  when: winrm_https_test.stdout is search('FAIL')
+
+# --- Dynamically Update Inventory ---
+- name: 📝 Switch connection variables in inventory to HTTP
+  set_fact:
+    ansible_winrm_transport: basic
+    ansible_port: 5985
+  when: winrm_https_test.stdout is search('FAIL')
+
+- name: 💾 Persist connection change to runtime hostvars
+  add_host:
+    name: "{{ inventory_hostname }}"
+    ansible_winrm_transport: basic
+    ansible_port: 5985
+    ansible_winrm_server_cert_validation: ignore
+  when: winrm_https_test.stdout is search('FAIL')

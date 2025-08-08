@@ -1,0 +1,37 @@
+---
+- name: Check if Chocolatey is already installed
+  ansible.windows.win_stat:
+    path: C:\ProgramData\chocolatey\bin\choco.exe
+  register: choco_check
+
+- name: Install Chocolatey if not present
+  ansible.windows.win_powershell:
+    script: |
+      Set-ExecutionPolicy Bypass -Scope Process -Force;
+      [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12;
+      iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+  when: not choco_check.stat.exists
+
+- name: Install Chocolatey packages (fallback)
+  chocolatey.chocolatey.win_chocolatey:
+    name: "{{ item.name | default(item) }}"
+    state: "{{ item.state | default('present') }}"
+    version: "{{ item.version | default(omit) }}"
+    choco_args: "{{ item.choco_args | default(omit) }}"
+  loop: "{{ choco_installed_packages }}"
+  when: winget_result.failed or winget_check.rc != 0
+
+- name: Clean chocolatey and nuget cache
+  block:
+    - name: Delete chocolatey/nuget temp files
+      ansible.windows.win_file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '%UserProfile%\AppData\Local\Temp\chocolatey\'
+        - '%UserProfile%\AppData\Local\Temp\nuget\'
+        - '%UserProfile%\AppData\Local\NuGet\Cache\'
+  rescue:
+    - name: Cache cleanup error (likely file in use)
+      ansible.builtin.debug:
+        msg: "Some Chocolatey cache files are still in use. Reboot may be required."

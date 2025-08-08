@@ -1,0 +1,48 @@
+---
+- name: 🔍 Hide 'Search' from Taskbar
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Search
+    name: SearchboxTaskbarMode
+    data: 0
+    type: dword
+    state: present
+  tags: [taskbar, search, windows]
+
+- name: 🧹 Remove Taskbar Items Cortana, Task View, Chat
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    type: dword
+    state: present
+  loop:
+    - { name: ShowCortanaButton, data: 0 }
+    - { name: ShowTaskViewButton, data: 0 }
+    - { name: TaskbarDa, data: 0 }   # Chat icon
+    - { name: TaskbarMn, data: 0 }   # Widgets
+  tags: [taskbar, cleanup, windows]
+
+- name: 📰 Disable 'News and Interests'
+  ansible.windows.win_regedit:
+    path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Feeds
+    name: EnableFeeds
+    data: 0
+    type: dword
+    state: present
+  tags: [taskbar, feeds, windows]
+
+- name: 👥 Hide 'People' Button from Taskbar
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People
+    name: PeopleBand
+    data: 0
+    type: dword
+    state: present
+  tags: [taskbar, people, windows]
+
+- name: ❌ Remove Built-in Taskbar Shortcuts (Edge, Store, etc.)
+  ansible.windows.win_regedit:
+    path: HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband
+    name: Favorites
+    state: absent
+  tags: [taskbar, cleanup, windows]

@@ -1,0 +1,7 @@
+---
+- name: 🔇 Disable Windows Search Indexing
+  win_service:
+    name: WSearch
+    state: stopped
+    start_mode: disabled
+  tags: [maintenance, indexing]

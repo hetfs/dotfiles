@@ -1,13 +1,96 @@
+---
 # 🪟 playbooks/windows/tasks/fonts.yml
+# tasks/fonts.yml — Windows Nerd Fonts installer (Ansible)
 
-- name: "Install fonts via Chocolatey"
-  win_chocolatey:
-    name:
-      - firacode
-      - jetbrainsmono
-    state: present
-  ignore_errors: true  # fallback if choco unavailable
+- name: 🧠 Define list of fonts to install
+  vars:
+    default_fonts:
+      - JetBrainsMono
+      - FiraCode
+      - Hack
+      - Consolas
+      - Monaspace
+      - CascadiaCode
+      - SourceCodePro
+      - Iosevka
+      - Inconsolata
+      - Menlo
+      - AnonymousPro
+      - UbuntuMono
+      - OperatorMono
+      - IBMPlexMono
+      - DejaVuSansMono
+  set_fact:
+    installed_nerdfonts: "{{ default_fonts }}"
 
-- name: "Install Nerd Fonts manually"
-  include_tasks: "{{ playbook_dir }}/base/tasks/install_nerd_fonts.yml"
-  when: install_nerd_fonts
+- name: 🌐 Fetch latest Nerd Fonts release info
+  ansible.windows.win_uri:
+    url: https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest
+    return_content: true
+  register: nerdfonts_release
+
+- name: 📦 Collect font ZIP download URLs
+  set_fact:
+    font_dl_urls: >-
+      {{
+        installed_nerdfonts | map('regex_replace', '[^a-zA-Z0-9]', '') | list | map('regex_replace', '^(.*)$', '\\1') |
+        map('regex_replace', '^', '') | list | map('regex_replace', '$', '.zip') |
+        map('extract_font_url', nerdfonts_release.json.assets) | select('truthy') | list
+      }}
+  vars:
+    extract_font_url: |
+      {% filter from_yaml %}
+      def extract_font_url(asset_list):
+          return lambda font_zip: next(
+              (asset for asset in asset_list if asset.name == font_zip),
+              None
+          )
+      {% endfilter %}
+
+- name: 💾 Download font ZIPs
+  ansible.windows.win_get_url:
+    url: "{{ item.browser_download_url }}"
+    dest: "{{ ansible_env.TEMP }}\\{{ item.name }}"
+  loop: "{{ font_dl_urls }}"
+  when: item is not none
+  loop_control:
+    label: "{{ item.name }}"
+  throttle: 1
+
+- name: 📂 Unzip font packages
+  community.windows.win_unzip:
+    src: "{{ ansible_env.TEMP }}\\{{ item.name }}"
+    dest: "{{ ansible_env.TEMP }}\\{{ item.name }}-unzipped"
+    creates: "{{ ansible_env.TEMP }}\\{{ item.name }}-unzipped"
+  loop: "{{ font_dl_urls }}"
+  when: item is not none
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: 🔍 Find .ttf files in extracted folders
+  ansible.windows.win_find:
+    paths: "{{ ansible_env.TEMP }}\\{{ item.name }}-unzipped"
+    patterns: ["*.ttf"]
+  loop: "{{ font_dl_urls }}"
+  register: font_files
+  when: item is not none
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: 🖋️ Install fonts via PowerShell
+  ansible.windows.win_shell: |
+    $FontsFolder = (New-Object -ComObject Shell.Application).Namespace(0x14)
+    $JoinPathArgs = @{
+      'Path' = "${env:LocalAppData}\Microsoft\Windows\Fonts"
+      'ChildPath' = '{{ item.filename }}'
+    }
+    $targetPath = Join-Path @JoinPathArgs
+    if (-not (Test-Path $targetPath)) {
+      $FontsFolder.CopyHere('{{ item.path }}')
+      Write-Output "change made"
+    }
+  register: font_install_result
+  changed_when: '"change made" in font_install_result.stdout'
+  loop: "{{ font_files.results | map(attribute='files') | flatten }}"
+  loop_control:
+    label: "{{ item.filename }}"

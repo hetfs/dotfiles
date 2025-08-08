@@ -1,0 +1,17 @@
+---
+# 🗂️ Create essential directories
+
+- name: "📂 Ensure temp directory exists"
+  ansible.windows.win_file:
+    path: "{{ ansible_env.TEMP }}\\ansible"
+    state: directory
+
+- name: "📁 Create developer workspace"
+  ansible.windows.win_file:
+    path: "C:\\Dev"
+    state: directory
+
+- name: "📁 Create tools directory"
+  ansible.windows.win_file:
+    path: "C:\\Tools"
+    state: directory

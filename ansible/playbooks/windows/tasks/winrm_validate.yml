@@ -1,0 +1,35 @@
+---
+- name: 🧾 Map client certificate to user
+  win_certificate_mapping:
+    username: "{{ ansible_user }}"
+    thumbprint: "{{ winrm_cert_thumbprint }}"
+    subject: "{{ winrm_cert_subject }}"
+    store_name: My
+    state: present
+  register: cert_map_result
+
+- name: 🧪 Try connecting over HTTPS WinRM to validate cert auth
+  win_command: 'hostname'
+  register: winrm_test_result
+  ignore_errors: yes
+  vars:
+    ansible_connection: winrm
+    ansible_port: 5986
+    ansible_winrm_transport: certificate
+    ansible_winrm_server_cert_validation: validate
+
+- name: 🔁 Fallback to HTTP if HTTPS test failed
+  set_fact:
+    ansible_port: 5985
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+  when: winrm_test_result.failed
+
+- name: 🔍 Show WinRM test result
+  debug:
+    msg: >-
+      WinRM HTTPS status: {{
+        '✅ Success - using cert-based auth on port 5986'
+        if not winrm_test_result.failed else
+        '❌ HTTPS failed, falling back to HTTP (port 5985, basic auth)'
+      }}

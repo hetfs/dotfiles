@@ -1,0 +1,59 @@
+# ===========================================================
+# Default variables for WinRM HTTPS Certificate Role
+# Controls certificate import/generation, WinRM listener setup,
+# firewall rules, and optional HTTP fallback.
+# Each variable maps directly to a numbered role task section.
+# ===========================================================
+# 🚨 Fail Early Logic:
+# Role will stop immediately if:
+#   - winrm_cert_pfx_path is empty AND
+#   - winrm_generate_csr is false AND
+#   - winrm_self_signed is false
+# This is enforced by the ❌ "Fail if no certificate method is configured" task (0️⃣)
+# ===========================================================
+
+# ------------------------------------------------
+# 1️⃣ Hostname binding for WinRM listener
+# ------------------------------------------------
+# FQDN or hostname used for certificate CN/SAN
+# Defaults to the Ansible inventory hostname
+# (Used in: CSR generation, self-signed cert creation, WinRM listener config)
+winrm_hostname: "{{ inventory_hostname }}"
+
+# ------------------------------------------------
+# 2️⃣ Certificate source and creation method
+# ------------------------------------------------
+# Full path to a PFX certificate file on the Ansible control node
+# Leave empty to trigger CSR or self-signed cert creation
+# (Used in: "Import PFX" tasks)
+winrm_cert_pfx_path: ""
+
+# Password for the PFX file
+# Must be Ansible Vault–encrypted in production
+# (Used in: "Import PFX" tasks)
+winrm_cert_password: ""
+
+# If true, generate a Certificate Signing Request (CSR) instead of importing a PFX
+# CSR will be saved to %TEMP%\winrm_https.req on the Windows host
+# (Used in: "Generate CSR" tasks)
+winrm_generate_csr: false
+
+# If true, generate a self-signed certificate if no PFX is provided
+# Ignored if winrm_generate_csr = true
+# (Used in: "Generate self-signed cert" tasks)
+winrm_self_signed: false
+
+# ------------------------------------------------
+# 3️⃣ Firewall configuration
+# ------------------------------------------------
+# Windows Firewall profile for WinRM rule creation
+# Options: Any | Domain | Private | Public
+# (Used in: "Allow WinRM HTTPS" and "Allow WinRM HTTP" tasks)
+win_firewall_profile: Any
+
+# ------------------------------------------------
+# 4️⃣ HTTP fallback behavior
+# ------------------------------------------------
+# If true, automatically configure HTTP WinRM listener if HTTPS setup fails
+# (Used in: HTTP fallback block)
+winrm_use_http_fallback: true

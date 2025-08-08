@@ -1,0 +1,30 @@
+---
+# 🛡️ Configure secure WinRM using custom script
+
+- name: "🧾 Define certificate vars"
+  ansible.builtin.set_fact:
+    winrm_cert_pfx_path: "{{ winrm_cert_pfx_path | default('C:/certs/winrm-cert.pfx') }}"
+    winrm_cert_password: "{{ winrm_cert_password | default('SuperSecretPassword123!') }}"
+    winrm_hostname: "{{ winrm_hostname | default(ansible_fqdn | default(ansible_hostname)) }}"
+    winrm_use_http_fallback: "{{ winrm_use_http_fallback | default(false) }}"
+    winrm_script_path: "{{ playbook_dir }}/../../scripts/Setup-WinRM-HTTPS.ps1"
+
+- name: "📁 Ensure script directory exists"
+  ansible.windows.win_file:
+    path: "{{ winrm_script_path | dirname }}"
+    state: directory
+
+- name: "📜 Execute WinRM HTTPS Setup Script"
+  ansible.windows.win_shell: |
+    powershell.exe -ExecutionPolicy Bypass -NoProfile -File "{{ winrm_script_path }}" `
+      -PfxPath "{{ winrm_cert_pfx_path }}" `
+      -CertPassword "{{ winrm_cert_password }}" `
+      -Hostname "{{ winrm_hostname }}" `
+      {{ '-UseHTTPFallback' if winrm_use_http_fallback else '' }}
+  register: winrm_script_output
+  changed_when: "'✅ WinRM configuration completed!' in winrm_script_output.stdout"
+  failed_when: "'❌' in winrm_script_output.stdout"
+
+- name: "🔍 Display script output"
+  debug:
+    var: winrm_script_output.stdout_lines

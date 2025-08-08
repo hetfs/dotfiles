@@ -1,0 +1,17 @@
+---
+- name: 🧹 Debloat — Uninstall unwanted apps using winget or choco
+  vars:
+    winget_cmd: "winget uninstall --silent --accept-source-agreements --accept-package-agreements --id {{ item.id | default(item) }}"
+
+  block:
+    - name: 📦 Try uninstalling with winget
+      ansible.windows.win_command: "{{ winget_cmd }}"
+      register: winget_result
+      ignore_errors: true
+
+    - name: ❌ Winget failed — fallback to Chocolatey
+      community.windows.win_chocolatey:
+        name: "{{ item.choco | default(item.id | default(item)) }}"
+        state: absent
+      when: winget_result is failed or '"No installed package" in winget_result.stderr'
+  loop: "{{ bloatware }}"

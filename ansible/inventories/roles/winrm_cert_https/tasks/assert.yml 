@@ -1,0 +1,11 @@
+---
+- name: 🚦 Validate WinRM HTTPS certificate configuration
+  ansible.builtin.assert:
+    that:
+      - (winrm_cert_pfx_path | length > 0) or (winrm_generate_csr | bool) or (winrm_self_signed | bool)
+    fail_msg: |
+      ❌ No valid certificate configuration found for WinRM HTTPS.
+      Please configure at least one of the following in your vars or inventory:
+        - winrm_cert_pfx_path (with winrm_cert_password)
+        - winrm_generate_csr: true
+        - winrm_self_signed: true

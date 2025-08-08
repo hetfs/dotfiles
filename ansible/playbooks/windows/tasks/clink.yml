@@ -1,0 +1,23 @@
+---
+- name: 🧩 Ensure winget is available
+  ansible.windows.win_stat:
+    path: "{{ ansible_env.ProgramData }}\\Microsoft\\Windows\\AppRepository\\Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
+  register: winget_installed
+  failed_when: not winget_installed.stat.exists
+  tags: [cli, clink]
+
+- name: 📦 Install Clink via winget
+  ansible.windows.win_shell: |
+    winget install --id=chrisant996.Clink --exact --silent --accept-package-agreements --accept-source-agreements
+  args:
+    executable: cmd.exe
+  register: winget_clink_output
+  changed_when: "'No applicable upgrade' not in winget_clink_output.stdout"
+  tags: [cli, clink]
+
+- name: 🔎 Verify Clink installation
+  ansible.windows.win_command: powershell -Command "(Get-Command clink.exe).Source"
+  register: clink_check
+  changed_when: false
+  failed_when: clink_check.rc != 0 or "'clink.exe'" not in clink_check.stdout | lower
+  tags: [cli, clink]

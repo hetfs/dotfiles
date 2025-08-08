@@ -1,0 +1,29 @@
+---
+- name: 🧹 Clean up Desktop Shortcuts
+  hosts: windows
+  gather_facts: false
+
+  tasks:
+    - name: 🏠 Get user profile path
+      ansible.windows.win_command: powershell.exe -NoProfile -Command "Write-Output $HOME"
+      register: user_home_path
+      changed_when: false
+
+    - name: 📁 Find *.lnk shortcuts on all common desktops
+      ansible.windows.win_find:
+        paths:
+          - C:\Users\Public\Desktop
+          - "{{ user_home_path.stdout | trim }}\\Desktop"
+          - "{{ user_home_path.stdout | trim }}\\OneDrive\\Desktop"
+        patterns: "*.lnk"
+      register: shortcuts
+      failed_when: false
+
+    - name: ❌ Remove desktop shortcuts
+      ansible.windows.win_file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ shortcuts.files | unique }}"
+      when: shortcuts.files | length > 0
+      vars:
+        ansible_become: true

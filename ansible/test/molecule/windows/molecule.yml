@@ -1,0 +1,18 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: delegated
+platforms:
+  - name: windows
+    image: your-windows-image
+    provider: your-provider
+    groups:
+      - windows
+provisioner:
+  name: ansible
+  inventory:
+    links:
+      hosts: ../../inventories/development/hosts.yml
+verifier:
+  name: ansible

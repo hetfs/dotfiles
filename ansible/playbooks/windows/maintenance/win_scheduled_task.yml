@@ -1,0 +1,22 @@
+
+- name: 🗓️ Create scheduled task to defrag C weekly (only if HDD)
+  ansible.windows.win_scheduled_task:
+    name: "Defrag C Weekly"
+    description: "Runs defragmentation on C: if it's an HDD"
+    actions:
+      # 🔍 Runs PowerShell which wraps the defrag.exe with verbose output
+      - path: powershell.exe
+        arguments: "-NoProfile -WindowStyle Hidden -Command \"Start-Process defrag.exe -ArgumentList 'C: /U /V' -NoNewWindow -Wait\""
+    trigger:
+      # 🔍 Runs every Sunday at 2:00 AM
+      - type: weekly
+        days_of_week:
+          - Sunday
+        start_boundary: '2025-08-10T02:00:00'
+    # 🔍 Runs with elevated privileges
+    username: SYSTEM
+    run_level: highest
+    state: present
+    enabled: true
+  # 🔍 Only creates the task if C: is rotational (HDD)
+  when: c_drive_is_hdd

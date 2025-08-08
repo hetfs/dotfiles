@@ -1,21 +1,14 @@
 ---
-- name: Enable Windows Defender
-  win_defender:
+- name: 🔒 Enable Windows Defender Realtime Protection
+  ansible.windows.win_defender:
     realtime_protection: enabled
     behavior_monitoring: enabled
     scan_type: full
 
-- name: Configure firewall
-  win_firewall_rule:
-    name: "Allow Ansible"
+- name: 🔥 Configure Windows Firewall Rule for Ansible (HTTPS WinRM)
+  ansible.windows.win_firewall_rule:
+    name: "Allow Ansible WinRM HTTPS"
     localport: 5986
     action: allow
     direction: in
-    protocol: tcp
-    state: present
-    enabled: yes
-
-- name: Apply CIS benchmarks
-  include_role:
-    name: ../../config/roles/security
-    tasks_from: windows.yml
+    protocol:

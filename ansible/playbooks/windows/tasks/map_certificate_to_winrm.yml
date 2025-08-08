@@ -1,0 +1,40 @@
+# ansible/playbooks/windows/tasks/map_certificate_to_winrm.yml
+---
+- name: 📥 Get installed HTTPS certificate matching the hostname
+  ansible.windows.win_shell: |
+    $cert = Get-ChildItem -Path Cert:\LocalMachine\My |
+      Where-Object { $_.Subject -like "*CN={{ ansible_hostname }}*" -and $_.EnhancedKeyUsageList.FriendlyName -contains "Server Authentication" } |
+      Sort-Object NotAfter -Descending |
+      Select-Object -First 1
+
+    if ($cert -eq $null) {
+      Write-Error "❌ No matching cert found for CN={{ ansible_hostname }}"
+      exit 1
+    }
+
+    # Output the Thumbprint
+    $cert.Thumbprint
+  register: cert_thumb
+
+- name: 🧠 Fail if no cert thumbprint was found
+  ansible.builtin.fail:
+    msg: "❌ No suitable certificate found on the host for CN={{ ansible_hostname }}"
+  when: cert_thumb.stdout_lines is not defined or cert_thumb.stdout_lines | length == 0
+
+- name: 🔐 Map certificate to WinRM HTTPS listener
+  ansible.windows.win_shell: |
+    $thumbprint = "{{ cert_thumb.stdout_lines[0] }}"
+    $listener = winrm enumerate winrm/config/Listener |
+      Select-String -Pattern "ListenerId\s+=\s+({.*?})", "Hostname\s+=\s+(.+)", "Transport\s+=\s+HTTPS"
+
+    if ($listener -notmatch "Transport\s+=\s+HTTPS") {
+      Write-Error "❌ No HTTPS listener found on this host"
+      exit 1
+    }
+
+    winrm set winrm/config/Listener?Address=*+Transport=HTTPS "@{CertificateThumbprint='$thumbprint'}"
+  register: map_result
+
+- name: ✅ Confirm certificate was mapped
+  ansible.builtin.debug:
+    msg: "✅ Certificate {{ cert_thumb.stdout_lines[0] }} mapped to WinRM HTTPS listener successfully."

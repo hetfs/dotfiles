@@ -1,0 +1,27 @@
+---
+- name: 🧠 Gather hardware facts
+  ansible.builtin.setup:
+    gather_subset:
+      - hardware
+
+- name: 🔍 Check if C drive is rotational (HDD)
+  ansible.builtin.set_fact:
+    c_drive_is_hdd: "{{ ansible_facts.disks
+      | dict2items
+      | selectattr('key', 'match', '^[A-Z]:$')
+      | selectattr('key', 'equalto', 'C:')
+      | map(attribute='value.rotational')
+      | list
+      | first | default(true) }}"
+
+- name: ❌ Skip defrag — C is on SSD
+  ansible.builtin.debug:
+    msg: "C: is on an SSD. Skipping defragmentation."
+  when: not c_drive_is_hdd
+
+- name: 🧹 Defragment C (HDD only)
+  community.windows.win_defrag:
+    include_volumes: 'C:'
+    parallel: true
+    freespace_consolidation: true
+  when: c_drive_is_hdd

@@ -1,0 +1,4 @@
+- name: 🛠️ Include Windows maintenance tasks
+  include_tasks: "{{ playbook_dir }}/windows/tasks/maintenance/run_all.yml"
+  when: ansible_facts.os_family == 'Windows'
+  tags: [maintenance]

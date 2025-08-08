@@ -1,0 +1,52 @@
+---
+# 📦 Full Windows Maintenance Task Runner
+
+- name: "🔐 Ensure security updates are installed"
+  ansible.builtin.import_tasks: security.yml
+  when: install_windows_updates | default(false)
+
+- name: "🧽 Remove Windows bloatware"
+  ansible.builtin.import_tasks: bloatware.yml
+  when: remove_bloatware | default(false)
+
+- name: "💡 Install optional Windows features"
+  ansible.builtin.import_tasks: windows_features.yml
+  when: install_windows_features | default(false)
+
+- name: "🔌 Set power plan to {{ power_plan }}"
+  ansible.builtin.import_tasks: power_plan.yml
+  when: change_power_plan | default(false)
+
+- name: "🗃️ Configure Storage Sense cleanup"
+  ansible.builtin.import_tasks: storage_sense.yml
+  when: configure_storage_sense | default(false)
+
+- name: "🧹 Defragment selected volumes"
+  ansible.builtin.import_tasks: defrag.yml
+  when: defrag_volumes | default(false)
+
+- name: "🔤 Install selected Nerd Fonts"
+  ansible.builtin.import_tasks: fonts.yml
+  when: install_fonts | default(false)
+
+- name: "📦 Install packages via Winget"
+  ansible.builtin.import_tasks: winget.yml
+  when: install_winget_packages | default(false)
+
+- name: "🧭 Configure File Explorer, Start Menu, and Taskbar"
+  ansible.builtin.import_tasks: personalization.yml
+  when: >
+    configure_explorer | default(false) or
+    configure_start_menu | default(false) or
+    configure_taskbar | default(false) or
+    set_sound_scheme | default(false) or
+    disable_mouse_acceleration | default(false) or
+    remove_desktop_icons is not none
+
+- name: "🧠 Set hostname if requested"
+  ansible.builtin.import_tasks: hostname.yml
+  when: configure_hostname | default(false)
+
+- name: "🖥️ Enable Remote Desktop"
+  ansible.builtin.import_tasks: remote_desktop.yml
+  when: remote_desktop_enabled | default(false)

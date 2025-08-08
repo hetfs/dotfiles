@@ -1,7 +1,45 @@
-# Windows-specific variables
-chocolatey_packages:
-  - git
-  - vscode
-  - 7zip
+# group_vars/windows.yml
+# Windows-specific variables for Ansible + Chezmoi provisioning
 
+# 🛡️ WinRM Configuration (Secure & Flexible)
+winrm_cert_pfx_path: "{{ chezmoi.data.winrm_cert_pfx_path | default('C:/certs/winrm.pfx') }}"
+winrm_cert_password: "{{ chezmoi.data.winrm_cert_password | default(lookup('ansible.builtin.env', 'WINRM_CERT_PASSWORD')) }}"
+winrm_hostname: "{{ ansible_hostname | lower }}.local"
+winrm_cert_thumbprint: "ABCDEF1234567890ABCDEF1234567890ABCDEF12"
+winrm_client_cert_path: "/path/to/client.crt"
+winrm_client_key_path: "/path/to/client.key"
+winrm_use_http_fallback: false
 win_firewall_profile: Domain
+
+# 💽 Volume configuration for tasks like Chocolatey installs, cleanup, etc.
+include_volumes:
+  - C
+  - D
+
+# 🧰 Windows Features
+windows_features:
+  Containers: true
+  Microsoft-Hyper-V-All: true
+  TelnetClient: false
+  OpenSSH.Client: true
+  WSL: true
+
+# 🧩 Chezmoi Dotfiles Repo
+chezmoi_git_url: "https://github.com/hetfs/dotfiles.git"
+chezmoi_force: true
+chezmoi_apply_on_boot: true
+
+# 🔐 Chezmoi secrets (used via `chezmoi data` or secret templates)
+chezmoi_secret_backend: "vault"  # or "pass", "gopass", "1password", etc.
+chezmoi_secret_data:
+  github_token: "{{ chezmoi.secret 'github_token' }}"
+  winrm_cert_password: "{{ chezmoi.secret 'winrm_cert_password' }}"
+  ssh_private_key: "{{ chezmoi.secret 'ssh_private_key' }}"
+  ssh_public_key: "{{ chezmoi.secret 'ssh_public_key' }}"
+
+# ⚡ PowerShell Core version
+powershell_version: "7.4.1"
+
+# 🧠 OS/WSL Detection
+is_wsl: "{{ ansible_system == 'Linux' and 'Microsoft' in ansible_kernel }}"
+is_native_windows: "{{ ansible_os_family == 'Windows' and not is_wsl }}"

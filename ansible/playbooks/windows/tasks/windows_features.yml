@@ -1,0 +1,17 @@
+---
+- name: ⚙️ Enable or disable optional Windows features
+  ansible.windows.win_optional_feature:
+    name: "{{ feature.name }}"
+    state: "{{ 'present' if feature.enabled else 'absent' }}"
+    include_parent: true
+  loop: "{{ windows_features | dict2items }}"
+  loop_control:
+    loop_var: feature
+  register: feature_results
+
+- name: 🔁 Reboot if any Windows feature change requires it
+  ansible.windows.win_reboot:
+    msg: "Rebooting to complete optional feature configuration..."
+    reboot_timeout: 600
+  when: item.reboot_required | default(false)
+  loop: "{{ feature_results.results }}"

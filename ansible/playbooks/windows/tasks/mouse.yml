@@ -1,0 +1,27 @@
+---
+- name: 🖱️ Set Mouse Speed (sensitivity)
+  ansible.windows.win_regedit:
+    path: HKCU:\Control Panel\Mouse
+    name: MouseSensitivity
+    data: "{{ mouse_settings.sensitivity | default('10') }}"
+    type: string
+    state: present
+
+- name: 🖱️ Set Mouse Acceleration Thresholds
+  ansible.windows.win_regedit:
+    path: HKCU:\Control Panel\Mouse
+    name: "{{ item.name }}"
+    data: "{{ item.value }}"
+    type: string
+    state: present
+  loop:
+    - { name: MouseThreshold1, value: "{{ mouse_settings.threshold1 | default('6') }}" }
+    - { name: MouseThreshold2, value: "{{ mouse_settings.threshold2 | default('10') }}" }
+
+- name: 🖱️ Enable or Disable Mouse Acceleration
+  ansible.windows.win_regedit:
+    path: HKCU:\Control Panel\Mouse
+    name: MouseSpeed
+    data: "{{ mouse_settings.acceleration_enabled | ternary('1', '0') }}"
+    type: string
+    state: present

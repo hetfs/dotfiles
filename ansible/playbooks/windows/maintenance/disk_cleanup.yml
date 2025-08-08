@@ -1,0 +1,4 @@
+---
+- name: 🧹 Trigger Disk Cleanup on C:
+  win_command: cleanmgr.exe /sagerun:1
+  tags: [maintenance, diskcleanup]

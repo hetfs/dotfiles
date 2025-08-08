@@ -1,34 +1,52 @@
 ---
-- name: Configure Windows system
+- name: 🪟 Windows Platform Provisioning
   hosts: windows
-  gather_facts: true
+  gather_facts: yes
+  become: false
+
   vars_files:
     - "../../config/group_vars/all.yml"
     - "../../config/group_vars/windows.yml"
+    - "default.config.yml"  # 🆕 Loads platform-specific defaults
     - "{{ vault_file | default('secrets/ansible-vault/windows.yml') }}"
 
   tasks:
-    - name: Include core packages installation
-      include_tasks: tasks/packages.yml
-      tags: packages
+    - name: "🖥️ Set hostname"
+      ansible.builtin.include_tasks: "tasks/hostname.yml"
+      tags: [hostname]
 
-    - name: Apply system configuration
-      include_tasks: tasks/config.yml
-      tags: config
+    - name: "🔐 Configure security (Windows Defender, SmartScreen, etc.)"
+      ansible.builtin.include_tasks: "tasks/security.yml"
+      tags: [security]
 
-    - name: Apply security hardening
-      include_tasks: tasks/security.yml
-      when: security_hardening_enabled
-      tags: security
+    - name: "🛠️ Install base tools"
+      ansible.builtin.include_tasks: "tasks/packages.yml"
+      tags: [packages]
 
-    - name: Configure developer tools
-      include_tasks: tasks/dev_tools.yml
-      when: user_role == "developer"
-      tags: development
+    - name: "📂 Setup directories and paths"
+      ansible.builtin.include_tasks: "tasks/directories.yml"
+      tags: [filesystem]
 
-  handlers:
-    - name: Reboot system
-      win_reboot:
-        msg: "Reboot initiated by Ansible"
-        connect_timeout: 5
-        reboot_timeout: 600
+    - name: "🖋️ Install fonts"
+      ansible.builtin.include_tasks: "tasks/fonts.yml"
+      tags: [fonts]
+
+    - name: "🪟 Install Clink enhancements"
+      ansible.builtin.include_tasks: "tasks/clink.yml"
+      tags: [clink]
+
+    - name: "💻 Install PowerShell Core (pwsh)"
+      ansible.builtin.include_tasks: "tasks/pwsh.yml"
+      tags: [pwsh]
+
+    - name: "📟 Install Windows Terminal profile tweaks"
+      ansible.builtin.include_tasks: "tasks/terminal.yml"
+      tags: [terminal]
+
+    - name: "🔐 🛡️ Configure certificate for WinRM"
+      ansible.builtin.include_tasks: "tasks/winrm_cert.yml"
+      tags: [winrm, cert]
+
+    - name: "⚙️ Configure WinRM HTTPS listener and auth"
+      ansible.builtin.include_tasks: "tasks/winrm_listener.yml"
+      tags: [winrm, listener]

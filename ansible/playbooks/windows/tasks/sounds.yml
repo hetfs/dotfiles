@@ -1,0 +1,18 @@
+---
+- name: 🎵 Disable Windows sound schemes
+  ansible.windows.win_regedit:
+    path: HKCU:\AppEvents\Schemes
+    name: "(Default)"
+    data: ".None"
+    type: string
+
+- name: 🔇 Set all app event sounds to none
+  ansible.windows.win_powershell:
+    script: |
+      Get-ChildItem -Path "HKCU:\AppEvents\Schemes\Apps" |
+      Get-ChildItem |
+      Get-ChildItem |
+      Where-Object { $_.PSChildName -eq ".Current" } |
+      ForEach-Object {
+        Set-ItemProperty -Path $_.PSPath -Name "(Default)" -Value ""
+      }

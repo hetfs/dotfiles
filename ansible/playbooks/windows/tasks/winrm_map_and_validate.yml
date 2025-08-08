@@ -1,0 +1,36 @@
+---
+- name: 💠 Map HTTPS cert thumbprint to WinRM listener
+  ansible.windows.winrm:
+    transport: https
+    certificate_thumbprint: "{{ winrm_https_thumbprint }}"
+    hostname: "{{ ansible_host | default(inventory_hostname) }}"
+    port: 5986
+    state: present
+  register: winrm_cert_result
+  ignore_errors: true  # fallback on failure
+
+- name: 🧪 Validate WinRM HTTPS connection
+  ansible.builtin.wait_for:
+    port: 5986
+    host: "{{ ansible_host | default(inventory_hostname) }}"
+    timeout: 10
+  when: winrm_cert_result is not failed
+  register: winrm_https_check
+  ignore_errors: true
+
+- name: 🧰 Switch to HTTP if HTTPS failed
+  set_fact:
+    ansible_port: 5985
+    ansible_connection: winrm
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+  when: winrm_https_check is failed
+
+- name: 🔁 Debug fallback result
+  ansible.builtin.debug:
+    msg: >
+      {% if winrm_https_check is failed %}
+        HTTPS failed — falling back to HTTP (port 5985).
+      {% else %}
+        HTTPS connection verified on port 5986.
+      {% endif %}

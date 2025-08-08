@@ -1,0 +1,128 @@
+# ──────────────🔧 SYSTEM CONFIGURATION ──────────────
+configure_explorer: true
+configure_start_menu: true
+configure_taskbar: true
+set_sound_scheme: true
+disable_mouse_acceleration: true
+remove_desktop_icons: false
+
+# Hostname management
+configure_hostname: false
+custom_hostname: "windows-ansible"
+
+# Remote access
+remote_desktop_enabled: true
+
+# ──────────────⚡ POWER PLAN ──────────────
+change_power_plan: true
+# Options: high_performance | balanced | power_saver
+power_plan: "high_performance"
+
+# ──────────────🧹 STORAGE SENSE ──────────────
+configure_storage_sense: true
+storage_sense:
+  enabled: true
+  run_frequency: 1          # 1 = Every day, 7 = Week, 30 = Month
+  delete_unused_files: true
+  delete_recycle_bin_files: true
+  recycle_bin_age: 14       # Valid: 1, 14, 30, 60
+  delete_downloads_files: true
+  downloads_age: 14         # Valid: 1, 14, 30, 60
+
+# ──────────────💾 DEFRAG ──────────────
+defrag_volumes: true
+include_volumes:
+  - C
+
+# ──────────────🔐 SECURITY + UPDATES ──────────────
+install_windows_updates: true
+windows_updates_reboot: true
+update_categories:
+  # "*" installs all update types
+  - Critical Updates
+  - Security Updates
+  - Update Rollups
+
+# ──────────────📦 OPTIONAL FEATURES ──────────────
+install_windows_features: false
+windows_features:
+  Microsoft-Hyper-V: true
+
+# ──────────────🧽 BLOATWARE REMOVAL ──────────────
+remove_bloatware: true
+bloatware:
+  - Microsoft.BingNews
+  - Microsoft.BingWeather
+  - Microsoft.GamingApp
+  - Microsoft.GetHelp
+  - Microsoft.Getstarted
+  # - Microsoft.Messaging
+  - Microsoft.Microsoft3DViewer
+  - Microsoft.MicrosoftOfficeHub
+  - Microsoft.MicrosoftSolitaireCollection
+  - Microsoft.MicrosoftStickyNotes
+  - Microsoft.MixedReality.Portal
+  # - Microsoft.MSPaint
+  - Microsoft.Office.OneNote
+  - Microsoft.OneConnect
+  - Microsoft.People
+  - Microsoft.PowerAutomateDesktop
+  - Microsoft.Print3D
+  - Microsoft.ScreenSketch
+  - Microsoft.SkypeApp
+  - Microsoft.Todos
+  - Microsoft.Windows.Photos
+  - Microsoft.WindowsAlarms
+  # - Microsoft.WindowsCalculator
+  - Microsoft.Wallet
+  - Microsoft.WindowsCamera
+  # - microsoft.windowscommunicationsapps
+  - Microsoft.WindowsFeedbackHub
+  - Microsoft.WindowsMaps
+  - Microsoft.WindowsSoundRecorder
+  - Microsoft.Xbox
+  - Microsoft.Xbox.TCUI
+  - Microsoft.XboxApp
+  - Microsoft.XboxGameOverlay
+  - Microsoft.XboxSpeechToTextOverlay
+  # - Microsoft.YourPhone
+  - Microsoft.ZuneMusic
+  - Microsoft.ZuneVideo
+  - MicrosoftTeams
+
+# ──────────────📦 WINGET PACKAGES ──────────────
+install_winget_packages: true
+winget_packages:
+  - name: WinDynamicDesktop
+    source: winget
+  - name: git
+  - name: microsoft-windows-terminal
+  - name: clink
+  - name: duckduckgo
+  - name: peazip
+  - name: 7 zip
+  - name: powertoys
+  - name: python3
+  - name: sharex
+  - name: vlc
+  - name: vscode
+  - name: Auto Dark Mode
+
+# ──────────────🔡 FONTS ──────────────
+install_fonts: true
+installed_nerdfonts:
+  - JetBrainsMono
+  - FiraCode
+  - Hack
+  - Consolas
+  - Monaspace
+  - CascadiaCode
+  - SourceCodePro
+  - Iosevka
+  - Inconsolata
+  - Menlo
+  - AnonymousPro
+  - UbuntuMono
+  - OperatorMono
+  - IBMPlexMono
+  - DejaVuSansMono
