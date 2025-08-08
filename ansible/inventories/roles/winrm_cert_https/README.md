@@ -1,44 +1,52 @@
-# winrm_cert_https Role
+# WinRM HTTPS Certificate Role
 
 ## 📜 Overview
-This Ansible role automates the complete setup of **WinRM over HTTPS** on Windows hosts, including:
 
-1. **Installing a certificate** – from a `.pfx` file, a generated CSR, or a self-signed certificate.
-2. **Detecting the certificate thumbprint** automatically.
-3. **Configuring an HTTPS WinRM listener** bound to the certificate.
-4. **Enabling certificate authentication** for WinRM.
-5. **Opening the firewall** for WinRM over HTTPS.
-6. **Optional HTTP fallback** if HTTPS setup fails.
+This Ansible role automates the full setup of **WinRM over HTTPS** on Windows hosts by:
+
+1. Installing an SSL certificate via:
+
+   * Importing a `.pfx` file,
+   * Generating a Certificate Signing Request (CSR),
+   * Or creating a self-signed certificate.
+2. Automatically detecting the installed certificate’s thumbprint.
+3. Configuring a WinRM HTTPS listener bound to that certificate.
+4. Enabling certificate-based authentication for WinRM.
+5. Opening the Windows Firewall for HTTPS (TCP 5986).
+6. Optionally falling back to HTTP if HTTPS configuration or connectivity fails.
 
 ---
 
 ## ⚙️ Variables
-All variables are defined in [`defaults/main.yml`](defaults/main.yml) and can be overridden in your inventory or playbooks.
+
+All variables are set with secure defaults in [`defaults/main.yml`](defaults/main.yml) and can be overridden in your inventory or playbooks.
 
 ### 🔹 General
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `winrm_hostname` | `{{ inventory_hostname }}` | Hostname or FQDN for the WinRM HTTPS listener and certificate CN. |
+
+| Variable         | Default                    | Description                                           |
+| ---------------- | -------------------------- | ----------------------------------------------------- |
+| `winrm_hostname` | `{{ inventory_hostname }}` | Hostname/FQDN for the WinRM HTTPS listener & cert CN. |
 
 ### 🔹 Certificate Options
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `winrm_cert_pfx_path` | `""` | Full path to a `.pfx` file on the Ansible control node to copy to the Windows host. Leave empty to trigger CSR or self-signed mode. |
-| `winrm_cert_password` | `""` | Password for the `.pfx` file — **must be vaulted** in production. |
-| `winrm_generate_csr` | `false` | Set to `true` to generate a CSR (`%TEMP%\winrm_https.req`). |
-| `winrm_self_signed` | `false` | Auto-generate a self-signed certificate if no PFX and CSR is requested. |
 
-### 🔹 Firewall and Fallback Options
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `win_firewall_profile` | `Any` | Windows Firewall profile to apply the rule to (`Any`, `Domain`, `Private`, `Public`). |
-| `winrm_use_http_fallback` | `true` | If HTTPS fails, configure HTTP listener and update connection vars. |
+| Variable              | Default | Description                                                                            |
+| --------------------- | ------- | -------------------------------------------------------------------------------------- |
+| `winrm_cert_pfx_path` | `""`    | Path to `.pfx` file on control node to import. Empty triggers CSR or self-signed mode. |
+| `winrm_cert_password` | `""`    | Password for the `.pfx` file (vault this in production).                               |
+| `winrm_generate_csr`  | `false` | Generate a CSR file at `%TEMP%\winrm_https.req` when true.                             |
+| `winrm_self_signed`   | `false` | Create a self-signed cert if no PFX or CSR is provided.                                |
+
+### 🔹 Firewall & Fallback Options
+
+| Variable                  | Default | Description                                              |
+| ------------------------- | ------- | -------------------------------------------------------- |
+| `win_firewall_profile`    | `Any`   | Firewall profile to apply rules (`Any`, `Domain`, etc.)  |
+| `winrm_use_http_fallback` | `true`  | If HTTPS fails, configure HTTP listener and update vars. |
 
 ---
 
-## 🚀 Usage
+## 🚀 Usage Example
 
-### Example Playbook
 ```yaml
 - hosts: windows_servers
   gather_facts: no
@@ -48,7 +56,7 @@ All variables are defined in [`defaults/main.yml`](defaults/main.yml) and can be
         winrm_cert_pfx_path: "/path/to/winrm_cert.pfx"
         winrm_cert_password: "{{ vault_winrm_cert_password }}"
         win_firewall_profile: Domain
-````
+```
 
 ---
 
@@ -56,26 +64,26 @@ All variables are defined in [`defaults/main.yml`](defaults/main.yml) and can be
 
 ```mermaid
 graph TD
-    A["[Start Role Execution](tasks/main.yml)"] --> B{PFX File Provided?}
-    B -- Yes --> C["[Import PFX into LocalMachine\\My](tasks/main.yml#L15)"]
+    A[Start Role Execution] --> B{PFX File Provided?}
+    B -- Yes --> C[Import PFX into LocalMachine\My]
     B -- No --> D{Generate CSR?}
-    D -- Yes --> E["[Create CSR at %TEMP%\\winrm_https.req](tasks/main.yml#L30)"]
+    D -- Yes --> E[Create CSR at %TEMP%\winrm_https.req]
     D -- No --> F{Self-Signed Mode Enabled?}
-    F -- Yes --> G["[Generate Self-Signed Certificate](tasks/main.yml#L45)"]
-    F -- No --> H["[Fail: No certificate method selected](tasks/assert.yml)"]
+    F -- Yes --> G[Generate Self-Signed Certificate]
+    F -- No --> H[Fail: No certificate method selected]
 
-    C --> I["[Detect Certificate Thumbprint](tasks/main.yml#L60)"]
+    C --> I[Detect Certificate Thumbprint]
     E --> I
     G --> I
 
-    I --> J["[Configure WinRM HTTPS Listener](tasks/main.yml#L75)"]
-    J --> K["[Enable Certificate Authentication](tasks/main.yml#L90)"]
-    K --> L["[Open Firewall for TCP 5986](tasks/main.yml#L105)"]
-    L --> M["[Test HTTPS Connectivity](tasks/main.yml#L120)"]
+    I --> J[Configure WinRM HTTPS Listener]
+    J --> K[Enable Certificate Authentication]
+    K --> L[Open Firewall for TCP 5986]
+    L --> M[Test HTTPS Connectivity]
     M -- Success --> N[Role Complete]
     M -- Fail --> O{HTTP Fallback Enabled?}
-    O -- Yes --> P["[Configure HTTP Listener + Firewall 5985](tasks/main.yml#L135)"]
-    O -- No --> Q["[Fail Role](tasks/main.yml#L150)"]
+    O -- Yes --> P[Configure HTTP Listener + Firewall 5985]
+    O -- No --> Q[Fail Role]
     P --> N
 ```
 
@@ -83,52 +91,46 @@ graph TD
 
 ## 📊 Certificate Method Decision Table
 
-| Scenario             | `winrm_cert_pfx_path` | `winrm_generate_csr` | `winrm_self_signed` | Result                                                         |
-| -------------------- | --------------------- | -------------------- | ------------------- | -------------------------------------------------------------- |
-| **PFX Import**       | ✅ Non-empty path      | `false`              | `false` or `true`   | [Import `.pfx` into `LocalMachine\My`](tasks/main.yml#L15)     |
-| **CSR Generation**   | Empty                 | `true`               | `false` or `true`   | [Generate CSR at `%TEMP%\winrm_https.req`](tasks/main.yml#L30) |
-| **Self-Signed Cert** | Empty                 | `false`              | `true`              | [Auto-create self-signed cert](tasks/main.yml#L45)             |
-| **Fail**             | Empty                 | `false`              | `false`             | [Fail: no cert method chosen](tasks/assert.yml)                |
+| Scenario             | `winrm_cert_pfx_path` | `winrm_generate_csr` | `winrm_self_signed` | Result                                     |
+| -------------------- | --------------------- | -------------------- | ------------------- | ------------------------------------------ |
+| **PFX Import**       | Non-empty             | `false`              | `false` or `true`   | Import `.pfx` into `LocalMachine\My` store |
+| **CSR Generation**   | Empty                 | `true`               | `false` or `true`   | Generate CSR at `%TEMP%\winrm_https.req`   |
+| **Self-Signed Cert** | Empty                 | `false`              | `true`              | Create self-signed certificate for host    |
+| **Fail**             | Empty                 | `false`              | `false`             | Role fails with configuration error        |
 
 ---
 
 ## 🔄 Execution Flow (Task Mapping)
 
-1. **Fail-fast Validation** – [`tasks/assert.yml`](tasks/assert.yml)
-   Ensures at least one certificate method is chosen.
+The role proceeds through these steps (linked to `tasks/main.yml`):
 
-2. **Directory Setup** – [`tasks/main.yml#L10`](tasks/main.yml#L10)
-   Creates target folder for certificates.
-
+1. **Fail-fast Validation** – Verifies certificate method chosen.
+2. **Directory Setup** – Ensures folder for cert files exists.
 3. **Certificate Handling**:
 
-   * [Import PFX](tasks/main.yml#L15)
-   * [Generate CSR](tasks/main.yml#L30)
-   * [Create Self-Signed Cert](tasks/main.yml#L45)
-
-4. **Thumbprint Detection** – [`tasks/main.yml#L60`](tasks/main.yml#L60)
-
-5. **HTTPS Listener Setup** – [`tasks/main.yml#L75`](tasks/main.yml#L75)
-
-6. **Certificate Authentication** – [`tasks/main.yml#L90`](tasks/main.yml#L90)
-
-7. **Firewall Rules** – [`tasks/main.yml#L105`](tasks/main.yml#L105)
-
-8. **Connectivity Test** – [`tasks/main.yml#L120`](tasks/main.yml#L120)
-
-9. **HTTP Fallback** *(optional)* – [`tasks/main.yml#L135`](tasks/main.yml#L135)
+   * Import `.pfx`
+   * OR generate CSR
+   * OR create self-signed cert
+4. **Thumbprint Detection** – Finds the correct cert thumbprint.
+5. **Configure WinRM HTTPS Listener** – Binds listener to certificate.
+6. **Enable Certificate Authentication** – For WinRM.
+7. **Open Firewall Rule** – Allow inbound TCP 5986.
+8. **Connectivity Test** – Validates HTTPS WinRM access.
+9. **HTTP Fallback (Optional)** – Setup HTTP listener/firewall if HTTPS fails.
 
 ---
 
 ## 🔐 Security Notes
 
-* Always **vault-encrypt** `winrm_cert_password`:
+* Always encrypt sensitive passwords with Ansible Vault:
 
   ```bash
   ansible-vault encrypt_string 'SuperSecretPass!' --name 'winrm_cert_password'
   ```
-* Restrict `.pfx` file access.
-* If using self-signed certs, set:
+
+* Restrict `.pfx` file access on control and Windows hosts.
+
+* When using self-signed certs, set in inventory/playbook:
 
   ```yaml
   ansible_winrm_server_cert_validation: ignore
@@ -138,15 +140,15 @@ graph TD
 
 ## 🛠 Requirements
 
-* Ansible `>= 2.10`
-* Windows host with PowerShell 5.1+
-* Python `pywinrm` installed on control node
+* Ansible 2.10+
+* Windows hosts with PowerShell 5.1+
+* `pywinrm` Python package on the control node
 
 ---
 
 ## 📂 Role Structure
 
-```
+```plaintext
 roles/
 └── winrm_cert_https/
     ├── defaults/
@@ -161,7 +163,8 @@ roles/
 
 ---
 
-## 📌 Notes
+## 📌 Additional Notes
 
-* Role does **not** create DNS records — ensure `winrm_hostname` resolves.
-* CSR mode requires external signing before importing cert.
+* This role does **not** create or manage DNS entries — ensure `winrm_hostname` is resolvable.
+
+* CSR generation mode requires manual CA signing and cert import post-CSR creation.
