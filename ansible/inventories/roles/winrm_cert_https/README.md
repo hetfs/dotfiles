@@ -52,35 +52,6 @@ All variables are defined in [`defaults/main.yml`](defaults/main.yml) and can be
 
 ---
 
-## 🗺 Usage Diagram
-
-```mermaid
-graph TD
-    A["[Start Role Execution](tasks/main.yml)"] --> B{PFX File Provided?}
-    B -- Yes --> C["[Import PFX into LocalMachine\\My](tasks/main.yml#L15)"]
-    B -- No --> D{Generate CSR?}
-    D -- Yes --> E["[Create CSR at %TEMP%\\winrm_https.req](tasks/main.yml#L30)"]
-    D -- No --> F{Self-Signed Mode Enabled?}
-    F -- Yes --> G["[Generate Self-Signed Certificate](tasks/main.yml#L45)"]
-    F -- No --> H["[Fail: No certificate method selected](tasks/assert.yml)"]
-
-    C --> I["[Detect Certificate Thumbprint](tasks/main.yml#L60)"]
-    E --> I
-    G --> I
-
-    I --> J["[Configure WinRM HTTPS Listener](tasks/main.yml#L75)"]
-    J --> K["[Enable Certificate Authentication](tasks/main.yml#L90)"]
-    K --> L["[Open Firewall for TCP 5986](tasks/main.yml#L105)"]
-    L --> M["[Test HTTPS Connectivity](tasks/main.yml#L120)"]
-    M -- Success --> N[Role Complete]
-    M -- Fail --> O{HTTP Fallback Enabled?}
-    O -- Yes --> P["[Configure HTTP Listener + Firewall 5985](tasks/main.yml#L135)"]
-    O -- No --> Q["[Fail Role](tasks/main.yml#L150)"]
-    P --> N
-```
-
----
-
 ## 📊 Certificate Method Decision Table
 
 | Scenario             | `winrm_cert_pfx_path` | `winrm_generate_csr` | `winrm_self_signed` | Result                                                         |

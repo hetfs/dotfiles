@@ -172,4 +172,3 @@ roles/
 
 * Role does **not** create DNS records — ensure `winrm_hostname` resolves.
 * CSR mode requires external signing before importing cert.
-
