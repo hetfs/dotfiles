@@ -1,0 +1,107 @@
+---
+# System settings
+
+# Set hostname
+custom_hostname: my-awesome-pc
+
+# User settings
+
+# Set user to be used for configuration
+username: "{{ lookup('env', 'USER') }}"
+
+# Create custom directories
+create_directories: true
+directories:
+  - $HOME/Documents/repositories/
+
+# Enable paswordless sudo
+configure_sudoers: true
+sudoers_custom_config: |
+  # Allow users in sudo group to use sudo with no password.
+  %sudo ALL=(ALL) NOPASSWD: ALL
+
+# Clone your dotfiles and link them to the home directory
+configure_dotfiles: true
+dotfiles_repo: https://github.com/AlexNabokikh/dotfiles
+dotfiles_repo_accept_hostkey: true
+dotfiles_repo_local_destination: ~/Documents/repositories/dotfiles
+dotfiles_files:
+  - .gitconfig
+  - .p10k.zsh
+  - .tmux.conf
+  - .vimrc
+  - .zshrc
+
+# Install Nerd Fonts
+install_fonts: true
+installed_nerdfonts:
+  - Meslo
+
+# Configure GNOME. For more details see: https://github.com/PeterMosmans/ansible-role-customize-gnome
+configure_gnome: true
+gtk_version: 3.0
+gnome_user: "{{ lookup('env', 'USER') }}"
+gnome_extensions:
+  - id: 3843
+    enable: true
+
+gnome_gsettings:
+  - schema: org.gnome.desktop.peripherals.mouse
+    key: accel-profile
+    value: "flat"
+
+# Install and configure zsh
+configure_zsh: true
+# Plugin names have to be in the format github_user/plugin_name
+zsh_plugins:
+  - zsh-users/zsh-syntax-highlighting
+  - zsh-users/zsh-history-substring-search
+
+# Theme names have to be in the format github_user/theme_name
+zsh_themes:
+  - romkatv/powerlevel10k
+
+# Install and configure tmux
+configure_tmux: true
+tmux_dir: $HOME/.tmux
+
+# Application packages
+apt_repositories:
+  - ppa:aslatter/ppa
+apt_packages:
+  - alacritty
+  - fzf
+
+# Install NIX and and listed packages
+install_nix: true
+nix_packages:
+  - cowsay
+
+# Install snap and and listed packages
+install_snap: true
+snap_packages:
+  - nvim
+
+# Install flatpak and listed packages
+install_flatpak: true
+flatpak_packages:
+  - app/org.mozilla.firefox/x86_64/stable
+
+# Install homebrew and listed packages
+install_homebrew: true
+homebrew_packages:
+  - tfenv
+
+# Install PIP packages
+pip_packages:
+  - name: pip
+    state: latest
+
+# Install NPM packages
+npm_packages:
+  - name: neovim
+    state: latest
+
+# Execute dotfiles script
+execute_script: false
+user_script: ~/.install.sh

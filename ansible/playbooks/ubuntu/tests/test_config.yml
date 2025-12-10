@@ -1,0 +1,69 @@
+---
+username: "{{ lookup('env', 'USER') }}"
+
+create_directories: true
+directories:
+  - $HOME/Documents/repositories/
+
+configure_sudoers: true
+sudoers_custom_config: |
+  # Allow users in sudo group to use sudo with no password.
+  %sudo ALL=(ALL) NOPASSWD: ALL
+
+configure_dotfiles: true
+dotfiles_repo: https://github.com/AlexNabokikh/dotfiles
+dotfiles_repo_accept_hostkey: true
+dotfiles_repo_local_destination: ~/Documents/repositories/dotfiles
+dotfiles_files:
+  - .gitconfig
+
+install_fonts: true
+installed_nerdfonts:
+  - Meslo
+
+configure_gnome: false
+
+apt_repositories:
+  - ppa:aslatter/ppa
+apt_packages:
+  - alacritty
+  - fzf
+
+install_nix: true
+nix_packages:
+  - neovim
+
+install_snap: true
+snap_packages:
+  - hello-world
+
+install_flatpak: true
+flatpak_packages:
+  - app/org.mozilla.firefox/x86_64/stable
+
+install_homebrew: true
+homebrew_packages:
+  - hello
+
+pip_packages:
+  - name: pip
+    state: latest
+  - name: thefuzz
+    extra_args: --user
+
+npm_packages:
+  - name: neovim
+    state: latest
+
+configure_zsh: true
+zsh_plugins:
+  - zsh-users/zsh-syntax-highlighting
+
+zsh_themes:
+  - romkatv/powerlevel10k
+
+configure_tmux: true
+tmux_dir: $HOME/.tmux
+
+execute_script: true
+user_script: ~/.install.sh

@@ -1,0 +1,18 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+# ===========================================================
+# 🌍 HETFS LTD. Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+# ===========================================================
+
+# Markdownlint configuration for PulseBoard
+# Reference: https://github.com/DavidAnson/markdownlint
+
+default: true
+
+rules:
+  MD013: false # Disable line-length rule for better readability
+  MD033: false # Allow inline HTML (useful for Docusaurus/MDX)
+  MD041: false # Do not require the first line to be a heading
+  MD036: false # Allow varied emphasis styles (bold/italic flexibility)
