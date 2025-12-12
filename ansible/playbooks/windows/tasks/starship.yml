@@ -1,0 +1,30 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+#
+# 🌍 HETFS LTD. - Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+
+---
+- name: Ensure Starship is installed (Winget)
+  ansible.windows.win_package:
+    name: Starship
+    source: winget
+    state: present
+
+- name: Create Starship configuration directory
+  ansible.windows.win_file:
+    path: "{{ ansible_user_dir }}\\AppData\\Local\\starship"
+    state: directory
+
+- name: Deploy starship.toml
+  ansible.windows.win_template:
+    src: starship.toml.j2
+    dest: "{{ ansible_user_dir }}\\AppData\\Local\\starship\\starship.toml"
+
+- name: Add Starship init to PowerShell profile
+  ansible.windows.win_lineinfile:
+    path: "{{ ansible_user_dir }}\\Documents\\PowerShell\\Microsoft.PowerShell_profile.ps1"
+    line: 'Invoke-Expression (& starship init powershell)'
+    insertafter: EOF
+    state: present

@@ -1,7 +1,21 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+#
+# 🌍 HETFS LTD. - Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+#
+# Platform-Specific Ansible Requirements for macOS
+# =================================================
+
 ---
+collections:
+  - name: community.general
+  - name: geerlingguy.mac
+
 roles:
+  - name: geerlingguy.homebrew
+  - name: devsec.ssh-hardening
+  - name: gantsign.visual-studio-code
   - name: elliotweiser.osx-command-line-tools
   - name: geerlingguy.dotfiles
-
-collections:
-  - name: geerlingguy.mac

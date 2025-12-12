@@ -1,128 +1,196 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+#
+# 🌍 HETFS LTD. – Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+#
+# Windows Playbook Entry Point
+# Bootstrap → Provisioning → Developer Environment
+
 ---
-- name: Windows Playbook
+- name: Windows Provisioning
   hosts: all
+  strategy: bootstrap
+  gather_facts: false
 
   vars_files:
-    - default.config.yml
+    - custom.yml
 
   pre_tasks:
-    - name: Include playbook user configuration.
+    # ------------------------------------------------------------------
+    # Load user overrides (prompt.yml)
+    # ------------------------------------------------------------------
+    - name: Load user-defined configuration
       ansible.builtin.include_vars: "{{ item }}"
       with_fileglob:
-        - "{{ playbook_dir }}/config.yml"
+        - "{{ playbook_dir }}/custom.yml"
       tags: ["always"]
 
+    # ------------------------------------------------------------------
+    # Windows Bootstrap Stage (Chocolatey, OpenSSH, ExecutionPolicy)
+    # ------------------------------------------------------------------
+    - name: Run Windows bootstrap
+      ansible.builtin.import_tasks: tasks/bootstrap.yml
+      tags: ["bootstrap"]
+
   tasks:
-    - name: Include hostname configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/hostname.yml
+    # ------------------------------------------------------------------
+    # Hostname
+    # ------------------------------------------------------------------
+    - name: Configure hostname
+      ansible.builtin.import_tasks: tasks/hostname.yml
       when: configure_hostname
       tags: ["hostname"]
 
-    - name: Include windows updates configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/updates.yml
+    # ------------------------------------------------------------------
+    # Windows Updates
+    # ------------------------------------------------------------------
+    - name: Install Windows updates
+      ansible.builtin.import_tasks: tasks/updates.yml
       when: install_windows_updates
       tags: ["updates"]
 
-    - name: Include debloat configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/debloat.yml
+    # ------------------------------------------------------------------
+    # Debloat
+    # ------------------------------------------------------------------
+    - name: Remove Windows bloatware
+      ansible.builtin.import_tasks: tasks/debloat.yml
       when: remove_bloatware
       tags: ["debloat"]
 
-    - name: Include chocolatey configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/chocolatey.yml
+    # ------------------------------------------------------------------
+    # Chocolatey Packages
+    # ------------------------------------------------------------------
+    - name: Install Chocolatey packages
+      ansible.builtin.import_tasks: tasks/chocolatey.yml
       when: install_chocolatey_packages
       tags: ["choco"]
 
-    - name: Include winget configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/winget.yml
+    # ------------------------------------------------------------------
+    # Winget Packages
+    # ------------------------------------------------------------------
+    - name: Install Winget packages
+      ansible.builtin.import_tasks: tasks/winget.yml
       when: install_winget_packages
       tags: ["winget"]
 
-    - name: Include windows features configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/windows_features.yml
+    # ------------------------------------------------------------------
+    # Windows Features
+    # ------------------------------------------------------------------
+    - name: Enable Windows features
+      ansible.builtin.import_tasks: tasks/windows_features.yml
       when: install_windows_features
       tags: ["windows_features"]
 
-    - name: Include wsl2 configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/wsl2.yml
+    # ------------------------------------------------------------------
+    # WSL2
+    # ------------------------------------------------------------------
+    - name: Configure WSL2
+      ansible.builtin.import_tasks: tasks/wsl2.yml
       when: install_wsl2
       tags: ["wsl"]
 
-    - name: Include fonts configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/fonts.yml
+    # ------------------------------------------------------------------
+    # Fonts
+    # ------------------------------------------------------------------
+    - name: Install fonts
+      ansible.builtin.import_tasks: tasks/fonts.yml
       when: install_fonts
       tags: ["fonts"]
 
-    - name: Include ohmyposh configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/ohmyposh.yml
+    # ------------------------------------------------------------------
+    # Oh My Posh
+    # ------------------------------------------------------------------
+    - name: Configure Oh My Posh
+      ansible.builtin.import_tasks: tasks/ohmyposh.yml
       when: install_ohmyposh
       tags: ["ohmyposh"]
 
-    - name: Include explorer configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/explorer.yml
+    # ------------------------------------------------------------------
+    # Starship
+    # ------------------------------------------------------------------
+    - name: Install Starship prompt
+      ansible.builtin.import_tasks: tasks/starship.yml
+      when: install_starship
+      tags: ["starship"]
+
+    # ------------------------------------------------------------------
+    # Explorer
+    # ------------------------------------------------------------------
+    - name: Configure Windows Explorer
+      ansible.builtin.import_tasks: tasks/explorer.yml
       when: configure_explorer
       tags: ["explorer"]
 
-    - name: Include taskbar configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/taskbar.yml
+    # ------------------------------------------------------------------
+    # Taskbar
+    # ------------------------------------------------------------------
+    - name: Configure taskbar
+      ansible.builtin.import_tasks: tasks/taskbar.yml
       when: configure_taskbar
       tags: ["taskbar"]
 
-    - name: Include start menu configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/start_menu.yml
+    # ------------------------------------------------------------------
+    # Start Menu
+    # ------------------------------------------------------------------
+    - name: Configure Start Menu
+      ansible.builtin.import_tasks: tasks/start_menu.yml
       when: configure_start_menu
       tags: ["start_menu"]
 
-    - name: Include sounds configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/sounds.yml
+    # ------------------------------------------------------------------
+    # Sounds
+    # ------------------------------------------------------------------
+    - name: Configure sound scheme
+      ansible.builtin.import_tasks: tasks/sounds.yml
       when: set_sound_scheme
       tags: ["sounds"]
 
-    - name: Include mouse configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/mouse.yml
+    # ------------------------------------------------------------------
+    # Mouse
+    # ------------------------------------------------------------------
+    - name: Configure mouse settings
+      ansible.builtin.import_tasks: tasks/mouse.yml
       when: disable_mouse_acceleration
       tags: ["mouse"]
 
-    - name: Include power plan configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/power_plan.yml
+    # ------------------------------------------------------------------
+    # Power Plan
+    # ------------------------------------------------------------------
+    - name: Configure power plan
+      ansible.builtin.import_tasks: tasks/power_plan.yml
       when: change_power_plan
       tags: ["power"]
 
-    - name: Include remote desktop configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/remote_desktop.yml
+    # ------------------------------------------------------------------
+    # Remote Desktop
+    # ------------------------------------------------------------------
+    - name: Configure Remote Desktop
+      ansible.builtin.import_tasks: tasks/remote_desktop.yml
       when: remote_desktop_enabled
       tags: ["remote_desktop"]
 
-    - name: Include desktop configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/desktop.yml
+    # ------------------------------------------------------------------
+    # Desktop Icons
+    # ------------------------------------------------------------------
+    - name: Configure desktop icons
+      ansible.builtin.import_tasks: tasks/desktop.yml
       when: remove_desktop_icons
       tags: ["desktop"]
 
-    - name: Include storage sense configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/storage.yml
+    # ------------------------------------------------------------------
+    # Storage Sense
+    # ------------------------------------------------------------------
+    - name: Configure Storage Sense
+      ansible.builtin.import_tasks: tasks/storage.yml
       when: configure_storage_sense
       tags: ["storage_sense"]
 
-    - name: Include defrag configuration.
-      ansible.builtin.import_tasks:
-        file: tasks/defrag.yml
+    # ------------------------------------------------------------------
+    # Defrag
+    # ------------------------------------------------------------------
+    - name: Defragment volumes
+      ansible.builtin.import_tasks: tasks/defrag.yml
       when: defrag_volumes
       tags: ["defrag"]

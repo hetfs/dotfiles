@@ -1,0 +1,96 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+#
+# HETFS LTD. – Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+#
+# Windows Bootstrap Tasks
+# Executes win-bootstrap.ps1 from the dotfiles project root and validates
+# core provisioning requirements such as Chocolatey and OpenSSH.
+
+---
+
+# ---------------------------------------------------------------------------
+# Resolve expected bootstrap script location
+# ---------------------------------------------------------------------------
+- name: Resolve win-bootstrap.ps1 path
+  ansible.builtin.set_fact:
+    win_bootstrap_script: "{{ ansible_user_dir }}\\dotfiles\\win-bootstrap.ps1"
+
+# ---------------------------------------------------------------------------
+# Ensure the bootstrap script exists before attempting execution
+# ---------------------------------------------------------------------------
+- name: Validate win-bootstrap.ps1 exists
+  ansible.builtin.stat:
+    path: "{{ win_bootstrap_script }}"
+  register: bootstrap_path
+
+- name: Abort if bootstrap script is missing
+  ansible.builtin.fail:
+    msg: "win-bootstrap.ps1 not found at {{ win_bootstrap_script }}."
+  when: not bootstrap_path.stat.exists
+
+# ---------------------------------------------------------------------------
+# Run bootstrap script
+# Explicit PowerShell invocation to avoid PS remoting execution issues.
+# ---------------------------------------------------------------------------
+- name: Run win-bootstrap.ps1 from project root
+  ansible.windows.win_shell: >
+    PowerShell.exe -NoProfile -ExecutionPolicy Bypass
+    -File "{{ win_bootstrap_script }}"
+  args:
+    chdir: "{{ ansible_user_dir }}\\dotfiles"
+  register: bootstrap_output
+
+- name: Display bootstrap output
+  ansible.builtin.debug:
+    var: bootstrap_output.stdout
+
+# ---------------------------------------------------------------------------
+# Wait for WinRM reconnection
+# The strategy plugin forces a reconnect, but this ensures reliable execution.
+# ---------------------------------------------------------------------------
+- name: Pause to allow WinRM service to restart
+  ansible.builtin.pause:
+    seconds: 3
+
+# Force fact refresh after bootstrap modifies the OS state
+- name: Refresh facts after bootstrap
+  ansible.builtin.setup:
+
+# ---------------------------------------------------------------------------
+# Validation: Chocolatey
+# ---------------------------------------------------------------------------
+- name: Check Chocolatey availability
+  ansible.windows.win_command: choco --version
+  register: choco_check
+  failed_when: choco_check.rc != 0
+  changed_when: false
+
+- name: Report Chocolatey version
+  ansible.builtin.debug:
+    msg: "Chocolatey installed: {{ choco_check.stdout | trim }}"
+
+# ---------------------------------------------------------------------------
+# Validation: OpenSSH Server
+# ---------------------------------------------------------------------------
+- name: Check for sshd service
+  ansible.windows.win_service_info:
+    name: sshd
+  register: sshd_info
+
+- name: Fail if OpenSSH is not installed
+  ansible.builtin.fail:
+    msg: "OpenSSH not installed or sshd service not found."
+  when: sshd_info.exists is not defined or not sshd_info.exists
+
+- name: Ensure sshd is running
+  ansible.windows.win_service:
+    name: sshd
+    state: started
+    start_mode: auto
+
+- name: Confirm OpenSSH status
+  ansible.builtin.debug:
+    msg: "OpenSSH is installed and sshd service is running."

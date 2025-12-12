@@ -1,0 +1,32 @@
+---
+# vars/terminal-tools.yml
+tools:
+  - name: lazygit
+    repo_owner: jesseduffield
+    repo_name: lazygit
+    fallback_action: "lazygit_x86_64.zip"
+    fallback_regex: ".*Windows_x86_64.zip$"
+
+  - name: ripgrep
+    repo_owner: BurntSushi
+    repo_name: ripgrep-prebuilt
+    fallback_action: "ripgrep-x86_64.zip"
+    fallback_regex: ".*x86_64.*windows.*zip$"
+
+  - name: Yazi
+    repo_owner: sxyazi
+    repo_name: yazi
+    fallback_action: "yazi-x86_64.zip"
+    fallback_regex: ".*windows.*x86_64.*zip$"
+
+  - name: fd
+    repo_owner: sharkdp
+    repo_name: fd
+    fallback_action: "fd-x86_64.zip"
+    fallback_regex: ".*x86_64.*windows.*zip$"
+
+  - name: Silver Searcher
+    repo_owner: k-takata
+    repo_name: the_silver_searcher-win32
+    fallback_action: "ag-x64.zip"
+    fallback_regex: ".*x64.*zip$"

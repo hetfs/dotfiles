@@ -1,29 +1,86 @@
+# Dotfiles Repository
+
+This document describes the complete repository structure for your dotfiles project, including:
+
+* Global `ansible.cfg`
+* Platform‑specific `ansible.cfg` overrides (Windows, WSL, macOS, Ubuntu, Arch)
+* Scripts, bootstrap flows, and platform-specific tooling
+
+---
+
+## 📁 Repository Tree
+
+```
+dotfiles/
+├── README.md
+├── LICENSE
+├── Makefile
+├── scripts/
+│   ├── bootstrap.sh
+│   ├── bootstrap.ps1
+│   ├── install-chezmoi.sh
+│   └── install-chezmoi.ps1
+├── ansible/
+│   ├── ansible.cfg
+│   ├── requirements.yml
+│   └── playbooks/
+│       ├── macos/
+│       │   ├── ansible.cfg
+│       │   ├── main.yml
+│       │   └── tasks/packages.yml
+│       ├── ubuntu/
+│       │   ├── ansible.cfg
+│       │   ├── main.yml
+│       │   └── tasks/packages.yml
+│       ├── arch/
+│       │   ├── ansible.cfg
+│       │   ├── main.yml
+│       │   └── tasks/packages.yml
+│       ├── windows/
+│       │   ├── ansible.cfg
+│       │   ├── main.yml
+│       │   └── tasks/winrm.yml
+│       └── wsl/
+│           ├── ansible.cfg
+│           ├── main.yml
+│           └── tasks/packages.yml
+├── chezmoi/
+│   ├── chezmoi.toml.tmpl
+│   └── home/
+│       ├── .gitconfig.tmpl
+│       ├── .config/
+│       │   ├── starship.toml.tmpl
+│       │   ├── nvim/init.lua.tmpl
+│       │   └── powershell/Microsoft.PowerShell_profile.ps1.tmpl
+│       └── dot_shell/aliases.tmpl
+├── platform/
+│   ├── fonts-macos.sh
+│   ├── fonts-linux.sh
+│   └── fonts-windows.ps1
+└── .github/workflows/ci.yml
+```
+
+---
+
+## 🧩 Global `ansible.cfg`
+
+```ini
+# ===========================================================
 # ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
 # │ H │ │ E │ │ T │ │ F │ │ S │
 # └───┘ └───┘ └───┘ └───┘ └───┘
 #
-# HETFS LTD. - Code for a Brighter Future
+# 🌍 HETFS LTD. - Code for a Brighter Future
 # https://github.com/hetfs/dotfiles
-#
-# Global Ansible configuration
-# Includes Windows bootstrap priority logic.
-# Ensures win-bootstrap.ps1 runs before any Windows tasks.
-# ===============================================================
+# Global ansible.cfg for dotfiles/ansible
+# ===========================================================
 
 [defaults]
-
-# === INVENTORY AND PATHS ======================================
-# The inventory folder with grouped host definitions.
 inventory               = ansible/inventories
-
-# Default roles lookup location.
 roles_path              = ansible/roles
-
-# Collections used across all playbooks.
 collections_paths       = ansible/collections
-
-# Custom module, plugin, and strategy directories.
 library                 = ansible/plugins/modules
+
 filter_plugins          = ansible/plugins/filter
 action_plugins          = ansible/plugins/action
 lookup_plugins          = ansible/plugins/lookup
@@ -31,63 +88,36 @@ vars_plugins            = ansible/plugins/vars
 callback_plugins        = ansible/plugins/callback
 strategy_plugins        = ansible/plugins/strategy
 
-# Temporary storage paths used for module execution.
 remote_tmp              = ~/.ansible/tmp
 local_tmp               = ~/.ansible/tmp/local
 
-# === EXECUTION BEHAVIOR =======================================
 forks                   = 20
 pipelining              = true
 timeout                 = 45
-
-# Disable creation of retry files.
 retry_files_enabled     = false
 retry_files_save_path   = .retry/
-
-# Stop early on critical errors.
 any_errors_fatal        = false
 max_fail_percentage     = 0
-
-# Auto-detect Python interpreter for Linux/macOS.
 interpreter_python      = auto_silent
 
-# --------------------------------------------------------------
-# Windows bootstrap priority
-# --------------------------------------------------------------
-# This makes Windows hosts run the bootstrap phase before
-# any other tasks such as Chocolatey, Winget, or WinRM.
-# Requires the included custom strategy plugin.
-strategy                = hetfs.bootstrap_priority
-
-# === OUTPUT SETTINGS ==========================================
 stdout_callback         = yaml
 bin_ansible_callbacks   = true
 force_color             = true
-
-# Do not show skipped hosts unless needed.
 display_skipped_hosts   = false
-
-# Cleaner output, fewer warnings.
 deprecation_warnings    = false
 host_key_checking       = false
 show_custom_stats       = true
 
-# === INVENTORY PARSING AND CACHING ============================
 [inventory]
 cache                   = true
 cache_plugin            = jsonfile
 cache_timeout           = 3600
-
-# Plugins allowed to load inventories.
 enable_plugins          = auto, yaml, ini, script, host_list
-
-# Smart fact gathering.
 gathering               = smart
 fact_caching            = jsonfile
 fact_caching_connection = .cache/ansible/facts
 fact_caching_timeout    = 7200
 
-# === PRIVILEGE ESCALATION =====================================
 [privilege_escalation]
 become                  = true
 become_method           = sudo
@@ -95,52 +125,33 @@ become_user             = root
 become_ask_pass         = false
 become_flags            = -HE
 
-# === SSH CONNECTION FOR LINUX/MAC/WSL ==========================
 [ssh_connection]
 ssh_args                = -o ControlMaster=auto -o ControlPersist=60s -o ConnectTimeout=10
-
-# Store control sockets here.
 control_path_dir        = ~/.ssh/ansible
 control_path            = %(control_path_dir)s/%%h-%%p-%%r
-
 pipelining              = true
 ssh_transfer_method     = piped
-
-# Persistence options across platforms.
 control_master          = auto
 control_persist         = 60s
 
-# === PERSISTENT CONNECTION =====================================
 [persistent_connection]
 connect_timeout         = 30
 command_timeout         = 60
 connect_retry_timeout   = 15
 
-# === WINDOWS (WINRM) CONNECTION SETTINGS =======================
 [connection_winrm]
-# Automatically select best transport.
 transport               = auto
-
 kerberos                = false
-
-# Increase timeouts for long-running Windows tasks.
 read_timeout_sec        = 120
 operation_timeout_sec   = 120
-
-# Certificate trust paths for secure WinRM.
 ca_trust_path           = ~/.config/ansible/certs
 validate_certs          = true
 
-# Required so WinRM stabilizes after win-bootstrap.ps1.
-bootstrap_phase         = true
-
-# === GALAXY SETTINGS ===========================================
 [galaxy]
 requirements_file       = requirements.yml
 collections_paths       = ansible/collections
 ignore_certs            = false
 
-# === COLOR SCHEME ==============================================
 [colors]
 highlight               = white
 verbose                 = blue
@@ -151,7 +162,19 @@ skip                    = cyan
 unreachable             = red
 ok                      = green
 changed                 = yellow
+
 diff_add                = green
 diff_remove             = red
 diff_lines              = cyan
 diff_context            = white
+```
+
+---
+
+## Key Advantages
+
+1. **Centralized `group_vars` per OS** simplifies variable management and reduces complex conditional logic.
+2. **WSL tasks dynamically include Ubuntu tasks** to avoid duplication while supporting WSL environments.
+3. **Separated SSH and fonts tasks** makes core services modular and reusable across platforms.
+4. **Inventories organized by environment** support multi-stage deployments: development, staging, production.
+5. **Plugins fully categorized** enable custom modules, filters, callbacks, and other extensions to remain maintainable.

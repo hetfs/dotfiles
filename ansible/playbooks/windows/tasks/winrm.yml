@@ -1,0 +1,138 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+#
+# HETFS LTD. – Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+#
+# Windows WinRM Configuration Playbook
+# Supports optional CA-signed certificate or self-signed fallback
+
+---
+
+- name: Windows WinRM Setup
+  hosts: all
+  gather_facts: yes
+  vars_files:
+    - custom.yml
+
+  pre_tasks:
+    # -------------------------------------------------------------------------
+    # Validate required variables
+    # -------------------------------------------------------------------------
+    - name: Fail if WinRM user/password undefined
+      ansible.builtin.fail:
+        msg: "Required variable '{{ item }}' is missing. Define it in prompt.yml or defaults."
+      with_items:
+        - ansible_user
+        - ansible_password
+      when: hostvars[inventory_hostname][item] is not defined
+
+    - name: Ensure ansible_user is not empty
+      ansible.builtin.assert:
+        that:
+          - ansible_user | length > 0
+        fail_msg: "ansible_user must not be empty."
+
+    - name: Ensure ansible_password is not empty
+      ansible.builtin.assert:
+        that:
+          - ansible_password | length > 0
+        fail_msg: "ansible_password must not be empty."
+
+    # -------------------------------------------------------------------------
+    # Optional WinRM certificate variables
+    # -------------------------------------------------------------------------
+    - name: Set WinRM certificate variables
+      ansible.builtin.set_fact:
+        winrm_cert_thumbprint: "{{ winrm_cert_thumbprint | default('') }}"
+        winrm_cert_subject: "{{ winrm_cert_subject | default('CN=localhost') }}"
+        winrm_use_selfsigned: "{{ winrm_use_selfsigned | default(true) }}"
+
+    - name: Debug certificate configuration
+      ansible.builtin.debug:
+        msg:
+          - "WinRM certificate thumbprint: {{ winrm_cert_thumbprint }}"
+          - "WinRM certificate subject: {{ winrm_cert_subject }}"
+          - "Using self-signed fallback: {{ winrm_use_selfsigned }}"
+
+    # -------------------------------------------------------------------------
+    # Windows Bootstrap
+    # -------------------------------------------------------------------------
+    - name: Run HETFS WinBootstrap
+      ansible.windows.win_shell: |
+        $BootstrapPath = "{{ playbook_dir }}\..\..\scripts\win-scripts\win-bootstrap.ps1"
+        if (-Not (Test-Path $BootstrapPath)) {
+            Write-Error "win-bootstrap.ps1 not found at $BootstrapPath"
+            exit 1
+        }
+        & $BootstrapPath
+      args:
+        executable: powershell.exe
+      tags: ["bootstrap"]
+
+    # -------------------------------------------------------------------------
+    # Post-bootstrap validation
+    # -------------------------------------------------------------------------
+    - name: Verify Chocolatey installed
+      ansible.windows.win_shell: "(Get-Command choco -ErrorAction SilentlyContinue) -ne $null"
+      register: choco_check
+      changed_when: false
+      tags: ["bootstrap"]
+
+    - name: Fail if Chocolatey is missing
+      ansible.builtin.fail:
+        msg: "Chocolatey did not install correctly. Check win-bootstrap.ps1."
+      when: not choco_check.stdout | bool
+      tags: ["bootstrap"]
+
+    - name: Verify OpenSSH installed
+      ansible.windows.win_service:
+        name: sshd
+      register: sshd_check
+      changed_when: false
+      tags: ["bootstrap"]
+
+    - name: Fail if OpenSSH is missing
+      ansible.builtin.fail:
+        msg: "OpenSSH did not install correctly. Check win-bootstrap.ps1."
+      when: sshd_check.exists is not true
+      tags: ["bootstrap"]
+
+  tasks:
+    # -------------------------------------------------------------------------
+    # Enable WinRM over HTTPS with optional CA cert
+    # -------------------------------------------------------------------------
+    - name: Enable WinRM (HTTPS) with certificate options
+      ansible.windows.win_shell: |
+        $WinRMScript = "{{ playbook_dir }}\..\..\scripts\win-scripts\Enable-WinRM.ps1"
+        if (-Not (Test-Path $WinRMScript)) {
+            Write-Error "Enable-WinRM.ps1 not found at $WinRMScript"
+            exit 1
+        }
+
+        $Params = @{
+            UseSelfSigned = {{ winrm_use_selfsigned | lower }}
+            CertThumbprint = "{{ winrm_cert_thumbprint }}"
+            CertSubject = "{{ winrm_cert_subject }}"
+        }
+
+        & $WinRMScript @Params
+      args:
+        executable: powershell.exe
+      tags: ["winrm"]
+
+    # -------------------------------------------------------------------------
+    # Verify WinRM connectivity
+    # -------------------------------------------------------------------------
+    - name: Test WinRM connectivity to localhost
+      ansible.windows.win_shell: |
+        Test-WsMan -ComputerName localhost -UseSSL
+      register: winrm_test
+      failed_when: winrm_test.rc != 0
+      changed_when: false
+      tags: ["winrm"]
+
+    - name: Report WinRM status
+      ansible.builtin.debug:
+        msg: "WinRM is enabled and reachable over HTTPS."

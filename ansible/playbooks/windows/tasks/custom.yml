@@ -1,0 +1,76 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+#
+# HETFS LTD. – Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+#
+# User configuration used by the Windows playbook.
+# Override any setting here without modifying the core playbook.
+
+# ---------------------------------------------------------------------------
+# Bootstrap Phase (handled by win-bootstrap.ps1 + tasks/bootstrap.yml)
+# ---------------------------------------------------------------------------
+bootstrap_chocolatey: true
+bootstrap_openssh: true
+bootstrap_execution_policy: true
+
+# ---------------------------------------------------------------------------
+# System Configuration
+# ---------------------------------------------------------------------------
+configure_hostname: true
+hostname_value: "HETFS-DEVICE"
+
+install_windows_updates: false
+remove_bloatware: false
+
+# ---------------------------------------------------------------------------
+# Package Managers
+# ---------------------------------------------------------------------------
+install_chocolatey_packages: true
+install_winget_packages: true
+
+# ---------------------------------------------------------------------------
+# Windows Features
+# ---------------------------------------------------------------------------
+install_windows_features: true
+
+# ---------------------------------------------------------------------------
+# WSL2
+# ---------------------------------------------------------------------------
+install_wsl2: false
+
+# ---------------------------------------------------------------------------
+# Fonts and Terminal Experience
+# ---------------------------------------------------------------------------
+install_fonts: true
+
+# Updated based on your request:
+install_ohmyposh: false
+install_starship: true
+
+# ---------------------------------------------------------------------------
+# Windows UI Tweaks
+# ---------------------------------------------------------------------------
+configure_explorer: true
+configure_taskbar: true
+configure_start_menu: false
+set_sound_scheme: false
+disable_mouse_acceleration: true
+remove_desktop_icons: false
+
+# ---------------------------------------------------------------------------
+# Performance
+# ---------------------------------------------------------------------------
+change_power_plan: true
+defrag_volumes: false
+
+# ---------------------------------------------------------------------------
+# Remote Access
+# ---------------------------------------------------------------------------
+remote_desktop_enabled: false
+
+# ---------------------------------------------------------------------------
+# Storage Management
+# ---------------------------------------------------------------------------
+configure_storage_sense: false

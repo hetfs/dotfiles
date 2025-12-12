@@ -1,5 +1,20 @@
+# ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
+# │ H │ │ E │ │ T │ │ F │ │ S │
+# └───┘ └───┘ └───┘ └───┘ └───┘
+#
+# 🌍 HETFS LTD. - Code for a Brighter Future
+# https://github.com/hetfs/dotfiles
+#
+# Platform-Specific Ansible Requirements for Windows
+# ==================================================
+
 ---
 collections:
   - name: ansible.windows
-  - name: chocolatey.chocolatey
   - name: community.windows
+  - name: community.crypto
+  - name: chocolatey.chocolatey
+
+roles:
+  # WinRM configuration and security
+  - name: devsec.os-hardening
